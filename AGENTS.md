@@ -93,7 +93,11 @@ git checkout
 环境红线（本机已核实，不要凭记忆改）：
 
 - 一律用 **`python -m uv run --extra chN`**。本机 `python` 是 3.10.6，而 `agentbook` 要求 `>=3.11,<3.14`，直接 `pip install` 会失败。uv 已装且已缓存 3.12。`--extra chN` 不能省：根 `pyproject.toml` 只装核心依赖，每章自己的依赖（如 ch1 要的 `pypdf`、`tabulate`）在 `ch1 = ["agentbook[viz,docs]"]` 这类 extra 里。
-- **必须加 `NO_PROXY=localhost,127.0.0.1`。** 本机开着代理（`127.0.0.1:7897`），Python 的 httpx 会从 Windows 注册表读到它，于是**连本地 Ollama 都被塞进代理，返回 502 Bad Gateway**。curl 直连正常、Python 报 502，就是这个原因，别去怀疑 Ollama。
+- **必须让 `NO_PROXY` 包含 `localhost,127.0.0.1`。** 本机开着系统代理（`127.0.0.1:7897`），httpx 会把**连本地 Ollama 的请求也塞进代理，返回 502 Bad Gateway**。
+  - 已做的永久修复：用户级环境变量 `NO_PROXY` 和 `no_proxy` 都设成了 `localhost,127.0.0.1,::1`。**新开的终端自动生效，命令里不用再带任何前缀。**
+  - 若当前终端是修复前开的，就地补一句 —— cmd：`set NO_PROXY=localhost,127.0.0.1`；PowerShell：`$env:NO_PROXY="localhost,127.0.0.1"`；Git Bash：`export NO_PROXY=localhost,127.0.0.1`。
+  - **别被 Windows 的代理设置骗了**：本机 `ProxyOverride` 里明明已经有 `localhost;127.*;<local>`，但 httpx 构造绕过列表时**只读 `os.environ["NO_PROXY"]`，根本不查注册表**。系统层面配对了也没用。
+  - 换新机器时先检查这个变量，没有就 `setx NO_PROXY "localhost,127.0.0.1,::1"`（用户级，不需要管理员；新开终端才生效）。
 - **禁止使用 `python3.13`** —— PATH 上那个是坏掉的 Chocolatey shim。
 - 实验**默认 provider 是 `doubao`**，必须每次显式 `--provider ollama`（ollama 的 `requires_key=False`，无需 API Key，默认模型 `qwen3:8b`）。
 - **`--mode single` 必须同时给 `--task`**，否则它会进交互式菜单选任务，在非 tty 下直接 `EOFError` 退出。

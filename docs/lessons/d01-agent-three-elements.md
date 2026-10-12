@@ -68,9 +68,19 @@ class PayActivity : AppCompatActivity() {          // 逻辑（大脑）
 
 ### A. Python 观察（只跑不改）
 
+**cmd.exe（本机常用）** —— 环境变量已永久设好，新开窗口直接跑：
+
+```cmd
+cd /d F:\AIStudy\vendor\ai-agent-book\chapter1\context
+set PYTHONUTF8=1 && set PYTHONIOENCODING=utf-8
+python -m uv run --extra ch1 python main.py --mode single --provider ollama --context-mode full --task "1000 美元等于多少欧元？再换算成人民币是多少？"
+```
+
+Git Bash 版（`VAR=value cmd` 这种前缀写法**只有 bash 认，cmd 里会被当成命令名**，这是踩过的坑）：
+
 ```bash
 cd /f/AIStudy/vendor/ai-agent-book/chapter1/context
-NO_PROXY=localhost,127.0.0.1 PYTHONUTF8=1 PYTHONIOENCODING=utf-8 \
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 \
   python -m uv run --extra ch1 python main.py \
   --mode single --provider ollama --context-mode full \
   --task "1000 美元等于多少欧元？再换算成人民币是多少？"
@@ -81,23 +91,40 @@ NO_PROXY=localhost,127.0.0.1 PYTHONUTF8=1 PYTHONIOENCODING=utf-8 \
 **应该看到**：
 
 - `Agent initialized with provider: ollama, model: qwen3:8b, context mode: full`
-- `Iteration 1/10` → 模型发出 **2 个 tool_calls** → `Iteration 2` → `Terminal text response (no tool calls); stopping after iteration 2`
-- 结尾汇总：`Iterations: 2`、`Tool Calls: 2`、`Final Answer: 1000 美元等于 920 欧元，再换算成人民币约为 7240 元。`
-- 中间会打印一整段 `ITERATION 2 - FULL RESPONSE`，里面有个 `"reasoning"` 字段 —— **这段是今天的重点，务必读它**。
+- 若干轮 `Iteration N/10`，中间夹着 `HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"`
+- 结尾汇总 `Terminal text response (no tool calls); stopping after iteration N`、`Tool Calls: 2`
+- 中间会打印一整段 `ITERATION N - FULL RESPONSE`，里面有个 `"reasoning"` 字段 —— **这段是今天的重点，务必读它**。
 
-**本机已实测到的现象（这才是今天的教材）**：模型在 `reasoning` 里**自己发现了错误** —— 它写的原话大意是"用户要的是把 920 欧元换成人民币，但第二次工具调用转的是 1000 美元到人民币，这里有个 discrepancy"。然后它纠结了整整四百多字，反复推翻自己，最后**说服自己接受了那个错答案**：把 `1000 USD→CNY = 7240` 当成了 `920 EUR→CNY`。
+#### 本机两次实跑，同一个任务、同一个模型、同一个 context mode，结果不一样
 
-回到第 1 节那个问题：模型不笨，它**看见了**问题。所以 bug 不在大脑，在另外两件：
+| | 第 1 次跑 | 第 2 次跑 |
+|---|---|---|
+| iterations | 2 | 3 |
+| 第 2 次工具调用的实参 | `amount=1000, from=USD, to=CNY` ❌ | `amount=920, from=EUR, to=CNY` ✅ |
+| 工具返回 | `7240 CNY`（对，但是**另一个问题**的答案） | `7240 CNY`（920 × 7.8696，链式换算正确） |
+| 最终答案 | 把 `1000 USD→CNY` 冒充成 `920 EUR→CNY` | 换算链条正确 |
 
-- **工具**返回的确实是 `7240`，没错 —— 但它是**另一个问题**的答案。工具忠实地执行了一个错误的调用。
-- **上下文**里躺着正确的证据（第一次结果 920 EUR、第二次调用参数 `from=USD`），模型读到了、也推理出来了，**却没有任何机制强迫它相信工具结果而不是自己的圆场**。
+**第 1 次那个错，才是今天最好的教材。** 模型在 `reasoning` 里**自己发现了错误** —— 原话大意是"用户要的是把 920 欧元换成人民币，但第二次工具调用转的是 1000 美元到人民币，Wait, there's a discrepancy here"。它甚至先写出了正确方案（`amount=920, from_currency=EUR`）。然后纠结四百多字，反复推翻自己，最后一句是 "The assistant's initial tool calls were **correct**" —— 把错误宣布为正确，然后交卷。
 
-这个"没有机制强迫"，就是 Day 5 的 Harness（约束 + 验证 + 纠正）要补的洞。今天先把三要素认清。
+**第 2 次它自己就链对了。** 所以真正的结论有两条：
 
-**如果看到 `502 Bad Gateway`** → 漏了 `NO_PROXY=localhost,127.0.0.1`，本地 Ollama 被塞进代理了，不是 Ollama 坏了。
+1. 回到第 1 节那个问题：模型不笨，它**看见了**问题。bug 不在大脑。工具也忠实执行了它收到的调用。信息全都在上下文里躺着（第一次结果 920 EUR、第二次调用的 `from=USD`）。坏的是 —— **没有任何机制强迫它服从自己看见的证据**。这个洞 Day 5 的 Harness（约束 + 验证 + 纠正）来补。
+2. **同参数两次跑，轨迹不同。** 这不是 bug，是采样的本质。而它直接引出第 7 章那句话：*没有评估，就分不清「设计带来的提升」和「随机波动」*。你今天亲眼看到这个了 —— 以后你改了一版提示词、跑一次变好了，你**凭什么**说是提示词的功劳？记住这个疑问，W9 会回答它。
+
+#### 顺带抠一个区分：「工具调用正确」有三层，别混着说
+
+| 层次 | 第 1 次跑的情况 | 坏了该修哪 |
+|---|---|---|
+| 选对了工具吗 | ✅ 就是 `convert_currency` | 工具定义 / description（Day 15） |
+| **传对了参数吗** | ❌ **只有这层坏了** | 验证器（Day 5 Harness） |
+| 工具返回正确吗 | ✅ 7240 是 `1000 USD→CNY` 的真值 | 工具本身 |
+
+工程上这不是咬文嚼字：三层坏在不同地方，修法完全不同。团队里只说"工具调用不对"，两个人会去查两个完全不同的地方。
+
+**如果看到 `502 Bad Gateway`** → `NO_PROXY` 没生效。用户级环境变量已经永久设好了，但**只对修复之后新开的终端生效**；当前窗口就地补 `set NO_PROXY=localhost,127.0.0.1`（cmd）。不是 Ollama 坏了。
 **如果看到 `EOFError: EOF when reading a line`** → 漏了 `--task`，它进交互式菜单了。
 **如果看到 `ModuleNotFoundError: No module named 'pypdf'`** → 漏了 `--extra ch1`。
-**如果看到 `NameError: name 'openai' is not defined`** → 这是上游 bug（`agent.py:909` 异常处理里引用了没导入的模块），它盖住了真实错误，往上翻几行看原始异常。
+**如果看到 `NameError: name 'openai' is not defined`** → 这是上游 bug（`agent.py:909` 异常处理里引用了没导入的模块），它盖住了真实错误，往上翻几行看原始异常。今天你就被它盖住了一次 502。
 
 ### B. Kotlin 手写（你自己写实现，我只给 assert）
 
@@ -143,8 +170,11 @@ export JAVA_HOME="C:\\Program Files\\Android\\Android Studio\\jbr"
 ## 7. 讲师备注（只给 agent 看，学员可忽略）
 
 - 实际用时：__ 分（超 30 就砍明天的内容）
-- 偏离计划：无。今天是环境首次打通，`--task` 必填、`NO_PROXY` 必填、`--extra ch1` 必填三个坑都已写进 `AGENTS.md`。
+- 偏离计划：环境首次打通花了额外时间，四个坑已写进 `AGENTS.md`（`--task` 必填、`NO_PROXY`、`--extra ch1`、Kotlin 的 `-J-ea`）。其中 `NO_PROXY` 已做成用户级永久变量，学员在 cmd 里用 bash 前缀语法踩了一次坑，讲义 §4A 已改成 cmd 语法为主。
+- **学员对第 1 节的回答（记下来，Day 5 要回收）**：答了「先查工具是否调用正确」+「指令是否有歧义让智能体误解」。两处都对，且**没有甩锅给模型** —— 这说明三要素的框架已经装进去了。缺的是把「工具调用正确」拆成选工具/传参数/工具返回三层，已当场补上（见 §4A 的三层表）。
 - 本周依赖这个点的：**Day 2**（消融实验就是逐个摘掉三要素里的某一件，`--context-mode` 的 5 个取值 `full/no_history/no_reasoning/no_tool_calls/no_tool_results` 正好对应）、**Day 3**（ReAct 循环 = 今天这张图转起来）、**Day 5**（Harness 补的正是今天暴露的"没有机制强迫模型相信工具结果"这个洞）。
-- **今天这个"模型自己发现错误却说服自己接受"的案例非常值钱**，Day 2 和 Day 5 都要回来引用它。别让它过去了。
+- **今天攒下两个值钱的案例，后面必须回收，别让它过去**：
+  1. 「模型自己发现错误、写出正确方案、再说服自己接受错误」—— Day 2（`no_tool_results` 消融）和 Day 5（验证器）都要引用。
+  2. 「同参数两次跑，一次链对一次链错」—— 这是**随机波动 vs 真实提升**的活教材，W9 第 7 章评估开篇直接拿它当引子，比任何抽象论述都有力。
 - 对应备课 skill：`vendor/ai-agent-book/skills/context-engineering/SKILL.md`、`vendor/ai-agent-book/skills/loop-engineering/SKILL.md`
-- 本机 ollama 默认模型是 `qwen3:8b`（`agentbook/providers/registry.py:112-120`，`requires_key=False`）。另有 `qwen3.5:9b` 可用 `--model` 指定。
+- 本机 ollama 默认模型是 `qwen3:8b`（`agentbook/providers/registry.py:112-120`，`requires_key=False`）。完整模型清单和按章节的选用建议在 `AGENTS.md`。
