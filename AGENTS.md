@@ -95,12 +95,26 @@ git checkout
 - 一律用 **`python -m uv run --extra chN`**。本机 `python` 是 3.10.6，而 `agentbook` 要求 `>=3.11,<3.14`，直接 `pip install` 会失败。uv 已装且已缓存 3.12。`--extra chN` 不能省：根 `pyproject.toml` 只装核心依赖，每章自己的依赖（如 ch1 要的 `pypdf`、`tabulate`）在 `ch1 = ["agentbook[viz,docs]"]` 这类 extra 里。
 - **必须加 `NO_PROXY=localhost,127.0.0.1`。** 本机开着代理（`127.0.0.1:7897`），Python 的 httpx 会从 Windows 注册表读到它，于是**连本地 Ollama 都被塞进代理，返回 502 Bad Gateway**。curl 直连正常、Python 报 502，就是这个原因，别去怀疑 Ollama。
 - **禁止使用 `python3.13`** —— PATH 上那个是坏掉的 Chocolatey shim。
-- 实验**默认 provider 是 `doubao`**，必须每次显式 `--provider ollama`（ollama 的 `requires_key=False`，无需 API Key，默认模型 `qwen3:8b` 本机已装）。
+- 实验**默认 provider 是 `doubao`**，必须每次显式 `--provider ollama`（ollama 的 `requires_key=False`，无需 API Key，默认模型 `qwen3:8b`）。
 - **`--mode single` 必须同时给 `--task`**，否则它会进交互式菜单选任务，在非 tty 下直接 `EOFError` 退出。
 - 加 `PYTHONUTF8=1 PYTHONIOENCODING=utf-8`，否则中文输出在控制台是乱码。
 - 跑之前先 `main.py --help` 看真实的 `--mode` / `--provider`，**不要凭记忆猜 flag**。
 - 实验 README 是固定 6 段结构，直接按「按照步骤完成实验」那段走。
 - **`vendor/` 的内容永远不要手改。** 唯一例外：`uv run` 会在 `vendor/ai-agent-book/.venv` 建虚拟环境、实验会写 `task_result_full.json` 之类的产物，这是正常的，且整个 `vendor/` 已被 gitignore。
+
+本机 Ollama 已装模型（用 `--model` 指定，**按课程阶段选，别一律用默认**）：
+
+| 模型 | 体积 | 什么时候用它 |
+|---|---|---|
+| `qwen3:8b` | 5.2GB | 默认。快，日常观察够用 |
+| `qwen3.5:9b` | 6.6GB | 想要稍强一点时 |
+| **`deepseek-r1:8b`** | 5.2GB | **推理模型。Day 2 的 `--context-mode no_reasoning` 消融用它** —— 它才真的产出成段 reasoning，摘掉前后差异才明显 |
+| `huihui_ai/deepseek-r1-abliterated:32b` | 19GB | 最强推理，慢。需要"模型足够聪明却还是错了"的证据时用（如 Day 5 Harness） |
+| **`qwen2.5-coder:14b`** | 9.0GB | **W7 Coding Agent 周用这个**，别用通用模型 |
+| `deepseek-coder-v2:16b` | 8.9GB | W7 的对照选项 |
+| `qwen2.5-coder:7b` | 4.7GB | 想快速对比"小模型写代码差在哪"时 |
+
+`gpt-4:latest` 和 `qwen:7b` 是同一个 ID 的旧别名（两年前拉的），别用。
 
 已验证可用的完整命令（Day 1 就用这条）：
 
