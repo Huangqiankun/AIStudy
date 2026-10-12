@@ -56,13 +56,14 @@
 
 ```bash
 export JAVA_HOME="C:\\Program Files\\Android\\Android Studio\\jbr"
-/c/tools/kotlinc/bin/kotlinc kotlin/dNN-<slug>.kts -script -J-ea -J-Dstdout.encoding=UTF-8
+/c/tools/kotlinc/bin/kotlinc kotlin/dNN-<slug>.kts -script \
+  -J-ea -J-Dstdout.encoding=UTF-8 -J-Dstderr.encoding=UTF-8
 ```
 
 - kotlinc 2.4.21 装在 `C:\tools\kotlinc`，**没上 PATH**，必须写全路径。JDK 复用 Android Studio 自带的 JBR 21，没有另装 openjdk。
 - **换新机器时照这个装**（不需要管理员权限）：下载 `https://github.com/JetBrains/kotlin/releases/download/v2.4.21/kotlin-compiler-2.4.21.zip`（86MB），解压到 `C:\tools`，得到 `C:\tools\kotlinc`。**别用 `choco install kotlinc`** —— 那个包锁在 1.5.20（2021 年），跑在 JDK 21 上会挂，而且 choco 需要管理员权限还会顺带拉一整个 openjdk。
 - **`-J-ea` 绝对不能省。** Kotlin 的 `assert()` 默认是**关闭**的 —— 不加这个参数，`assert(false)` 会静默通过，整套自检当场变成摆设，而且没有任何报错提醒你。已实测确认。
-- `-J-Dstdout.encoding=UTF-8` 是为了让 assert 失败信息里的中文不乱码（Windows 控制台默认 GBK）。assert 的报错信息是学员主要的反馈回路，这条不能省。
+- `-J-Dstdout.encoding=UTF-8` 和 `-J-Dstderr.encoding=UTF-8` 都不能省，否则中文乱码（Windows 控制台默认 GBK）。**两条要一起给**：`println` 走 stdout，而 assert 失败信息和异常栈走 stderr —— 只给 stdout 的话，学员最需要看清的那条报错反而是鬼画符。assert 的报错信息是学员主要的反馈回路。
 - 没实现时脚本应在 `TODO()` 处抛 `NotImplementedError`、退出码 3 —— 这是**正确**的初始状态，说明自检有效。
 - 讲师若要验证某份 assert 契约本身可满足（即作业不是无解的），**在 `/tmp` 里复制一份改，验完立刻删**，绝不把实现写进 `kotlin/` 或贴给学员。
 
@@ -86,7 +87,8 @@ git checkout
 
 - **`MSYS_NO_PATHCONV=1` 不能省。** Git Bash 会把 `/pyproject.toml` 这种"看起来像路径"的参数改写成 `C:/Program Files/Git/pyproject.toml`，规则静默失效、文件拉不下来，而 `git sparse-checkout list` 才会暴露真相。带通配符的 `/book/*.md` 不受影响，所以症状很有迷惑性。
 - **`github.com` 直连不通（api/raw/codeload 反而通）。** clone 前先 `curl -sS -m 15 -o /dev/null -w '%{http_code}' https://github.com/`，不是 200 就让学员开 VPN TUN 模式，别在这儿反复重试。
-- 拉完核对体积应是 **~18MB**（整仓 777MB）。若明显偏大说明 sparse 没生效。
+- 拉完核对**净 checkout 体积应是 ~18MB**（整仓 777MB）：`du -sh --exclude=.venv vendor/ai-agent-book`。若明显偏大说明 sparse 没生效。
+- 注意跑过实验后总体积会涨到 **~272MB**，那是 `uv` 在 `vendor/ai-agent-book/.venv` 里装的依赖（255MB），**正常现象，不是 sparse 失效**，别去"修"它。要腾空间直接删 `.venv`，下次 `uv run` 会重建。
 
 环境红线（本机已核实，不要凭记忆改）：
 

@@ -110,10 +110,11 @@ NO_PROXY=localhost,127.0.0.1 PYTHONUTF8=1 PYTHONIOENCODING=utf-8 \
 
 ```bash
 export JAVA_HOME="C:\\Program Files\\Android\\Android Studio\\jbr"
-/c/tools/kotlinc/bin/kotlinc kotlin/d01-agent-three-elements.kts -script -J-ea -J-Dstdout.encoding=UTF-8
+/c/tools/kotlinc/bin/kotlinc kotlin/d01-agent-three-elements.kts -script \
+  -J-ea -J-Dstdout.encoding=UTF-8 -J-Dstderr.encoding=UTF-8
 ```
 
-`-J-ea` 别省 —— Kotlin 的 `assert()` 默认关闭，不加它 `assert(false)` 也会静默通过。现在跑应该看到 `kotlin.NotImplementedError` 停在 `assemble` 那行、退出码 3，**这是对的**，说明自检有效。全部填完后应该打印 `Day 1 全部 assert 通过。`
+`-J-ea` 别省 —— Kotlin 的 `assert()` 默认关闭，不加它 `assert(false)` 也会静默通过。**`-J-Dstderr.encoding=UTF-8` 也别省** —— assert 失败和异常栈走的是 stderr，只给 `stdout.encoding` 的话中文报错全是乱码（本机已实测：只加 stdout 时 `AssertionError` 的中文消息变成 `STDERR ĶϢ` 这种鬼画符）。现在跑应该看到 `kotlin.NotImplementedError` 停在 `assemble` 那行、退出码 3，**这是对的**，说明自检有效。全部填完后应该打印 `Day 1 全部 assert 通过。`
 
 > 讲师红线：我不会给实现。你敲完、跑通、再拿回来，我逐条 assert 跟你过。
 

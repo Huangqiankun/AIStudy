@@ -65,7 +65,8 @@ assert(<边界：坏输入下必须降级，而不是崩>)
 
 ```bash
 export JAVA_HOME="C:\\Program Files\\Android\\Android Studio\\jbr"
-/c/tools/kotlinc/bin/kotlinc kotlin/dNN-<slug>.kts -script -J-ea -J-Dstdout.encoding=UTF-8
+/c/tools/kotlinc/bin/kotlinc kotlin/dNN-<slug>.kts -script \
+  -J-ea -J-Dstdout.encoding=UTF-8 -J-Dstderr.encoding=UTF-8
 ```
 
 > 讲师红线：只给签名和 assert，**绝不给实现**。学员自己敲完、跑通，再拿回来 review。
