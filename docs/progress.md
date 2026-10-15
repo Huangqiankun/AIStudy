@@ -23,6 +23,7 @@
 |---|---|---|---|---|
 | 1 | 2026-10-13 | [Agent 三要素](lessons/d01-agent-three-elements.md) | ✅ | 断言写了三轮：过度指定→`none`/`any` 反→指定不足；变异电池四条全过 |
 | 1 | 2026-10-15 | [Agent 三要素（新版重讲）](lessons/d01-agent-three-elements.md) | ✅ | 曾混淆 LLM 参数选择、Harness 传参和工具执行；经真实轨迹与 A/B/C 定位题后通过 |
+| 2 | 2026-10-15 | [观察空间与动作空间](lessons/d02-observation-action-space.md) | ✅ | 曾混淆审计记录与模型消息、接口可用与必定调用；经真实 PDF 基线、`no_tool_calls` 对照和换例复查后通过 |
 
 ---
 
