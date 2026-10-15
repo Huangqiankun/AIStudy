@@ -76,7 +76,7 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 | 小步 | 证据位置 | 要核对的问题 | 真实观察 / 学员解释 |
 |---|---|---|---|
-| 1. 初始输入 | `api_turns[0].request.messages` | 路径和文件正文分别是否出现？ | 首轮只有 `system,user`；用户消息含路径，不含 PDF 正文。待学员解释。 |
+| 1. 初始输入 | `api_turns[0].request.messages` | 路径和文件正文分别是否出现？ | 首轮只有 `system,user`；用户消息含路径，不含 PDF 正文。学员解释：工具已经加入本轮请求但尚未调用，所以模型还没有观察到正文。判断正确；协议上工具定义位于请求顶层 `tools`，不是 `messages` 中的一条消息。 |
 | 2. 可选动作 | `api_turns[0].request.tools` | 模型被告知可以调用哪些接口？ | 请求含 `parse_pdf, convert_currency, calculate, code_interpreter`。待分步讲解。 |
 | 3. 动作执行 | `api_turns[0].response...tool_calls` 与顶层 `tool_calls` | 模型请求、框架执行及实际参数能否对上？ | 模型选择 `parse_pdf` 并传入用户给的本地路径；本地记录显示同名工具成功解析。待分步讲解。 |
 | 4. 新观察 | 下一轮 `request.messages` 中对应 `role=tool` 的内容 | PDF 文本是否真的进入模型的下一次输入？ | 第二轮角色为 `system,user,assistant,tool`，`tool.content` 含一页正文与元数据。待分步讲解。 |
