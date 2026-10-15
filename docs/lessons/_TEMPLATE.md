@@ -18,6 +18,13 @@
 <一张角色关系或数据流图>
 ```
 
+**实验全景预告**（只说明路线，不揭示结果）：
+
+- 要完成的任务：<一句话任务>
+- 学员会亲自运行：<基线命令类型 + 单变量对照命令类型>
+- 会得到的产物：<控制台输出、JSON、日志或其他证据位置>
+- 结束时要能回答：<本课核心问题如何由证据回答>
+
 **确认问题**：<只问一个问题，等回答后继续。>
 
 ## 2. 实验前预测
@@ -30,20 +37,32 @@
 
 ## 3. 运行实验
 
-先在实验目录运行 `python -m uv run --extra chN python main.py --help` 核实真实参数。下面以 PowerShell 为例，填写后再执行：
+讲师备课时先在实验目录运行 `python -m uv run --extra chN python main.py --help` 核实真实参数。正式实验由学员在 PowerShell 中亲自运行；对话里一次只给当前步骤的一个代码块，等待学员贴回真实输出后再给下一步。讲义可备全，但课堂按下面顺序分开提供。
+
+**步骤 A：环境准备**
 
 ```powershell
 Set-Location 'F:\AIStudy\vendor\ai-agent-book\chapterN\<dir>'
 $env:NO_PROXY = 'localhost,127.0.0.1,::1'
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
+```
+
+**步骤 B：核对 CLI**（收到步骤 A 的输出后再给）
+
+```powershell
 python -m uv run --extra chN python main.py --help
+```
+
+**步骤 C：运行基线**（收到步骤 B 的输出并完成预测后再给）
+
+```powershell
 python -m uv run --extra chN python main.py --mode single --provider ollama --model <模型> --task '<任务>' --output lesson-dNN-baseline.json
 ```
 
 **准备观察什么**：<列关键字段或输出类型，不保证固定轮数和成功结果。>
 
-**真实证据**：待运行。记录时间、完整命令、退出状态、实际模型与产物位置；不要粘贴 API Key 等凭据。产物留在被忽略的实验目录，讲义保留必要脱敏摘录以便跨设备阅读。
+**真实证据**：待学员运行并贴回输出。记录时间、完整命令、退出状态、实际模型与产物位置；不要粘贴 API Key 等凭据。产物留在被忽略的实验目录，讲义保留必要脱敏摘录以便跨设备阅读。
 
 ## 4. 逐段读真实轨迹
 
@@ -74,7 +93,7 @@ python -m uv run --extra chN python main.py --mode single --provider ollama --mo
 - 唯一改变的条件：<优先使用原实验已有 CLI 开关，核实它实际改变什么>
 - 保持不变：<同一任务、模型、provider、其他参数；输出文件可不同以保存证据>
 - 对照前预测：待回答
-- 对照命令：<基线命令只改该条件，并另存 lesson-dNN-comparison.json>
+- 对照命令：<基线命令只改该条件，并另存 lesson-dNN-comparison.json；由学员亲自运行并贴回输出>
 - 真实轨迹与结果：待运行
 
 | 实测观察 | 解释假设 | 待验证判断 |
