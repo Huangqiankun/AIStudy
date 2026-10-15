@@ -149,6 +149,8 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 答不出来就缩小到“路径字符串 vs 文件正文”的例子补讲，再换一个 ContentProvider 例子复查。实验、对照、源码与三项检查全部完成才记 `✅`。
 
+**理解检查 1 首次回答**：学员把定义 `parse_pdf` 及选择非 `no_tool_calls` 视为观察空间，把当前轨迹声明的 `parse_pdf` 视为动作空间，并指出由 LLM 决定是否使用。已抓住模型选择和工具连接，但观察空间与动作空间发生重叠。校准为：`parse_pdf` 作为可调用接口属于动作空间；通过它可能取得的 PDF 正文属于观察空间；当前上下文是某一次 API 请求实际提供给模型的信息快照，调用前后内容不同；Harness 负责执行并把新观察装入下一轮上下文。
+
 ## 8. 可选 AI 代码演示
 
 本课默认不安排 Kotlin 或 Python 编程作业。真实请求 JSON 与现有 `agent.py` 足以展示接口边界；若学员需要，再在本讲义内补最小示意，不新建工程或依赖。
