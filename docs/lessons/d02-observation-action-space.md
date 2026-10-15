@@ -100,6 +100,8 @@ Python 只解释读懂行为所需的字典、条件表达式、函数调用和 
 
 **源码第二段学员解释**：正确判断 `full` 下 `tools=self._get_tools_description()`、`tool_choice="auto"`，`no_tool_calls` 下二者均为 `None`；初步推测后者使模型不知道 `parse_pdf` 的用途并可能解析失败。校准：这里不是仅移除说明文字，而是整个结构化工具定义不再提供，`parse_pdf` 不属于该请求的动作空间。模型仍可能拒绝、猜测或直接回答，不能预设一定以“解析失败”形式表现。
 
+**源码第三段学员解释**：正确识别 `tool_msg` 负责包装消息、`messages.append(tool_msg)` 使结果进入后续上下文，但把 `ToolCall(...)` 误认为执行工具。已校准：`result = self._execute_tool(...)` 才真正执行；`ToolCall(...)` 与 `self.trajectory.tool_calls.append(...)` 只是保存本地审计记录，不负责调用真实工具，也不直接把结果送给模型。随后用“删除本地记录但保留消息追加”的小例子复查。
+
 ## 6. 单变量对照：从请求中移除工具定义
 
 先问：**只把 `full` 改为 `no_tool_calls` 后，模型仍能看到文件路径；它还可能出现哪些表现？哪项证据才能证明它真的读过 PDF？** 等学员回答后再运行。
