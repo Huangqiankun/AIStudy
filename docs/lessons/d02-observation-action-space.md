@@ -51,6 +51,7 @@ Environment 产生新结果或状态变化
 - 预测问题：仅提供文件路径与同时提供读文件工具，Agent 的可见信息边界分别是什么？不要先预测固定话术，列出可能行为并说明用什么证据区分。
 - 学员预测：用户给 PDF 与任务；LLM 判断意图后加载对应 Skill、插件或工具（如 `parse_pdf`）；下一轮通过工具读取正文并返回结果；再下一轮整合结果作答；把用户输入算上至少四步。
 - 讲师待校准：整体“输入 → 选择读取 → 工具结果 → 最终回答”的闭环方向正确，但本实验不是上传文件，也没有动态 Skill/插件加载。用户消息给的是本地路径；Harness 在第一次模型调用前就把固定工具定义放进请求。模型只选择是否调用。一次典型成功轨迹可拆成四个事件（用户任务、模型请求工具、Harness 执行并追加结果、模型回答），但按模型 API 调用次数通常是两轮；真实轮数仍以本次轨迹为准。
+- 校准后回答：确认 `parse_pdf` 由 Harness 预先加入，LLM 负责判断是否调用它来读取 PDF 正文。补充边界：参数也由 LLM 生成，真实工具由 Harness 执行。
 
 ## 3. 运行实验：完整观察与动作接口
 
@@ -67,7 +68,7 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 **准备观察什么**：不预设模型一定调用工具。分别核对：工具是否出现在请求、模型是否提出调用、框架是否真的执行、结果是否进入下一轮请求、最终答案是否由该结果支持。
 
-**真实证据**：待运行。证据保存在实验目录的 `lesson-d02-baseline.json`；记录运行时间、退出状态、实际模型、请求与结果字段。PDF 已在备课时用本地解析器确认可读，但这不算模型本次已读取。
+**真实证据**：2026-10-15 22:25 实跑成功退出，实际模型 `qwen3:8b`，证据保存在实验目录的 `lesson-d02-baseline.json`。共 2 轮 API 调用、1 次 `parse_pdf` 工具调用；工具成功解析 1 页 PDF。解析器打印了 `incorrect startxref pointer(1)` 与 `parsing for Object Streams` 警告，但随后明确记录 `Successfully parsed PDF with 1 pages`，不能仅凭警告判失败。最终回答为 `380,000,000 日元（JPY）`。
 
 ## 4. 逐段读真实轨迹
 
@@ -75,11 +76,11 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 | 小步 | 证据位置 | 要核对的问题 | 真实观察 / 学员解释 |
 |---|---|---|---|
-| 1. 初始输入 | `api_turns[0].request.messages` | 路径和文件正文分别是否出现？ | 待运行 |
-| 2. 可选动作 | `api_turns[0].request.tools` | 模型被告知可以调用哪些接口？ | 待运行 |
-| 3. 动作执行 | `api_turns[0].response...tool_calls` 与顶层 `tool_calls` | 模型请求、框架执行及实际参数能否对上？ | 待运行 |
-| 4. 新观察 | 下一轮 `request.messages` 中对应 `role=tool` 的内容 | PDF 文本是否真的进入模型的下一次输入？ | 待运行 |
-| 5. 最终回答 | `final_answer` 与 PDF 观察 | 答案是否有证据支持，而不只是碰巧正确？ | 待运行 |
+| 1. 初始输入 | `api_turns[0].request.messages` | 路径和文件正文分别是否出现？ | 首轮只有 `system,user`；用户消息含路径，不含 PDF 正文。待学员解释。 |
+| 2. 可选动作 | `api_turns[0].request.tools` | 模型被告知可以调用哪些接口？ | 请求含 `parse_pdf, convert_currency, calculate, code_interpreter`。待分步讲解。 |
+| 3. 动作执行 | `api_turns[0].response...tool_calls` 与顶层 `tool_calls` | 模型请求、框架执行及实际参数能否对上？ | 模型选择 `parse_pdf` 并传入用户给的本地路径；本地记录显示同名工具成功解析。待分步讲解。 |
+| 4. 新观察 | 下一轮 `request.messages` 中对应 `role=tool` 的内容 | PDF 文本是否真的进入模型的下一次输入？ | 第二轮角色为 `system,user,assistant,tool`，`tool.content` 含一页正文与元数据。待分步讲解。 |
+| 5. 最终回答 | `final_answer` 与 PDF 观察 | 答案是否有证据支持，而不只是碰巧正确？ | 回答与工具正文中的 `Japan Office: ¥380,000,000 JPY` 一致。待分步讲解。 |
 
 必须分开核对“接口可用”“接口被选择”“接口已执行”“结果已回传”“答案有依据”。任一项成立都不能自动推出后面各项成立。
 
