@@ -155,6 +155,8 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 **理解检查 2 首次回答**：对 `no_tool_results` 预测为“不定义工具，`tool.content` 为空”，并正确判断即使碰巧答对也不能说模型看到了正文。已校准：该模式仍提供工具定义且 Harness 仍执行工具，只把结果消息内容置空；模型可能拒绝、猜测、重试或采取其他策略，不能预设单一表现。第二次回答只确认 `tool.content` 与下一轮正文为空，尚未回答首轮是否有工具定义、模型选择调用后 Harness 是否执行，继续缩小问题。
 
+**理解检查 2 复查**：学员确认首轮仍包含 `parse_pdf` 定义，`no_tool_results` 只清空结果内容，模型选择调用后 Harness 仍执行对应工具。能区分动作接口、真实执行与观察回传；结果预测通过。
+
 ## 8. 可选 AI 代码演示
 
 本课默认不安排 Kotlin 或 Python 编程作业。真实请求 JSON 与现有 `agent.py` 足以展示接口边界；若学员需要，再在本讲义内补最小示意，不新建工程或依赖。
