@@ -102,6 +102,8 @@ Python 只解释读懂行为所需的字典、条件表达式、函数调用和 
 
 **源码第三段学员解释**：正确识别 `tool_msg` 负责包装消息、`messages.append(tool_msg)` 使结果进入后续上下文，但把 `ToolCall(...)` 误认为执行工具。已校准：`result = self._execute_tool(...)` 才真正执行；`ToolCall(...)` 与 `self.trajectory.tool_calls.append(...)` 只是保存本地审计记录。复查时又认为删除本地记录会破坏 `tool_call_id` 配对；继续校准为：API 配对发生在 `messages` 内已有的 `assistant.tool_calls[].id` 与新增 `tool.tool_call_id` 之间，独立于 `self.trajectory.tool_calls` 审计列表。改用反向删除 `messages.append(tool_msg)` 的例子再检查。
 
+**反向例子回答**：学员认为 LLM 知道工具成功但上下文没有对应记录。已指出矛盾：模型 API 无状态，LLM 只能依据本轮请求；只保留 `self.trajectory.tool_calls` 时，本地 Harness/审计文件知道执行结果，下一轮 LLM 不知道。并且在要求工具调用与工具结果配对的 API 上，缺少 `tool` 消息还可能使下一次请求直接被协议校验拒绝。
+
 ## 6. 单变量对照：从请求中移除工具定义
 
 先问：**只把 `full` 改为 `no_tool_calls` 后，模型仍能看到文件路径；它还可能出现哪些表现？哪项证据才能证明它真的读过 PDF？** 等学员回答后再运行。
