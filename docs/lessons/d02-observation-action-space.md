@@ -80,7 +80,7 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 | 2. 可选动作 | `api_turns[0].request.tools` | 模型被告知可以调用哪些接口？ | 请求含 `parse_pdf, convert_currency, calculate, code_interpreter`。待分步讲解。 |
 | 3. 动作执行 | `api_turns[0].response...tool_calls` 与顶层 `tool_calls` | 模型请求、框架执行及实际参数能否对上？ | 模型选择 `parse_pdf` 并传入用户给的本地路径；本地记录显示同名工具成功解析。学员指出仅凭本地解析成功还不能断定 LLM 已看见正文，必须继续验证结果是否加入后续上下文。判断正确。 |
 | 4. 新观察 | 下一轮 `request.messages` 中对应 `role=tool` 的内容 | PDF 文本是否真的进入模型的下一次输入？ | 第二轮角色为 `system,user,assistant,tool`，`tool.content` 含一页正文与元数据。学员以 `call_bm05tg0i` 和正文摘录定位证据；进一步校准为：`assistant.tool_calls[0].id == tool.tool_call_id` 证明调用与结果配对，`tool.content` 中的 `Japan Office: ¥380,000,000 JPY` 证明正文进入第二轮请求。 |
-| 5. 最终回答 | `final_answer` 与 PDF 观察 | 答案是否有证据支持，而不只是碰巧正确？ | 回答与工具正文中的 `Japan Office: ¥380,000,000 JPY` 一致。学员先指出执行中可能有其他因素导致错误，所以不能只看最终结果；方向正确，但尚未明确说出“同一轨迹中工具观察已进入第二轮请求，且最终答案与该观察一致”的证据链，已缩小为填空复查。 |
+| 5. 最终回答 | `final_answer` 与 PDF 观察 | 答案是否有证据支持，而不只是碰巧正确？ | 回答与工具正文中的 `Japan Office: ¥380,000,000 JPY` 一致。学员先指出不能只看最终结果；首次填空两处都答 `call_bm05tg0i`，混淆了配对证据与内容依据。已提示：相同 ID 只证明调用与回复配对，正文所在字段及金额一致性才支持答案来源。 |
 
 必须分开核对“接口可用”“接口被选择”“接口已执行”“结果已回传”“答案有依据”。任一项成立都不能自动推出后面各项成立。
 
