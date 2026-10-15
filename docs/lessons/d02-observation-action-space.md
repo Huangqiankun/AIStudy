@@ -96,6 +96,8 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 Python 只解释读懂行为所需的字典、条件表达式、函数调用和 `append`；每次读一小段，并用真实 JSON 对上。
 
+**源码第一段学员解释**：根据 `name`、`description` 和 `parameters` 判断这里只是在说明可用接口及参数定义，并未执行读取。判断正确。
+
 ## 6. 单变量对照：从请求中移除工具定义
 
 先问：**只把 `full` 改为 `no_tool_calls` 后，模型仍能看到文件路径；它还可能出现哪些表现？哪项证据才能证明它真的读过 PDF？** 等学员回答后再运行。
