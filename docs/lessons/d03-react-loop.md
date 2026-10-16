@@ -141,6 +141,10 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 **对照真实证据**：2026-10-16 22:08–22:09，学员实跑 `ollama / qwen3:8b / no_history`，产物为实验目录下的 `lesson-d03-comparison.json`。10 个 `api_turns[].request.messages` 均为 2 条、角色序列 `system,user`；10 个响应均为 `finish_reason=tool_calls` 且工具名均为 `parse_pdf`，参数路径相同；本地日志每轮均记录 `Successfully parsed PDF with 1 pages`。运行达到 `Iteration 10/10` 后结束，汇总为 `Iterations: 10 / Tool Calls: 10 / Terminal response completed: False`。这证明本次失败点不是 PDF 解析器未执行，而是观察未进入下一轮模型请求，循环无法从“读取”推进到“换算”。
 
+**学员对照解释**：判断失败点是执行结果没有进入下一轮模型请求。证据一是请求/响应 JSON 只能看到每轮重新声明并申请 `parse_pdf`，无法从后续请求看到工具结果；证据二是本地日志明确记录 `Reading local PDF...` 与 `Successfully parsed PDF with 1 pages`，证明工具实际执行成功。能够用两类证据排除解析器失败并定位观察回传边界，解释通过。
+
+**日志来源追问**：学员询问上述解析日志是否由 `self.trajectory.tool_calls.append(tool_call_record)` 产生。源码核实后答案是否定的：`agent.py:103` 与 `135` 的 `logger.info(...)` 直接输出 `Reading...` 和 `Successfully parsed...`；`agent.py:875` 只把结构化 `ToolCall` 加入本地轨迹，不打印这些日志。该轨迹随后由 `main.py:653-660` 序列化进输出 JSON 的 `tool_calls` 数组。warning 来自 PDF 解析库，不由轨迹 append 产生。
+
 ## 7. 理解检查：每次只问一题
 
 1. **概念复述**：ReAct 的“想—做—看”分别由谁完成？轨迹为什么能让下一轮不是从头开始？
