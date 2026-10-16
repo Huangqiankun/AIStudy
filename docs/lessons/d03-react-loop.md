@@ -95,7 +95,7 @@ PDF 解析期间出现 `incorrect startxref pointer(1)` 与 `parsing for Object 
 | 首轮响应与执行 | 响应为 `parse_pdf(call_t12nr5lz)`；日志随后记录成功解析 1 页 | 决定读取用户给出的路径 | Harness 执行 `parse_pdf` 并取得正文 | 学员用调用 ID 与工具结果配对，核心正确；字段名校准为上一轮 `assistant.tool_calls[0].id`，不是两边都叫 `tool_call_id`。 |
 | 下一轮请求 | `api_turns[1].request.messages` 角色为 `system,user,assistant,tool`；`tool_call_id=call_t12nr5lz` | 首次看见包含日本办公室金额的真实正文 | Harness 将首轮 assistant 决策和 tool 观察组装进请求 | 学员指出 `assistant.tool_calls[0].id == tool.tool_call_id == call_t12nr5lz` 证明配对，且 `role=tool` 的 `content` JSON 内页文本包含 PDF 正文。解释通过。 |
 | 后续动作 | 第 2 轮响应请求 `convert_currency(call_61inq4cz)`，参数为 `380000000, JPY, USD`；工具返回 `2541806.02` | 从 PDF 观察提取金额并决定换算 | Harness 执行换算并追加结果 | 学员用 `convert_currency` 及其参数和上一条 `role=tool` 正文中的 `380000000 JPY` 建立联系，方向正确。校准：顶层工具声明只证明接口可用；数据流证据是前一条 `tool.content` 的实际金额与随后 `assistant.tool_calls[].function.arguments.amount` 相等。 |
-| 终止响应 | 第 3 轮请求角色为 `system,user,assistant,tool,assistant,tool`；响应 `finish_reason=stop`、无 `tool_calls` | 看见两次真实工具结果后生成最终文本 | Harness 因响应无工具调用而在第 3 轮退出 | 待回答 |
+| 终止响应 | 第 3 轮请求角色为 `system,user,assistant,tool,assistant,tool`；响应 `finish_reason=stop`、无 `tool_calls` | 看见两次真实工具结果后生成最终文本 | Harness 因响应无工具调用而在第 3 轮退出 | 学员根据日志认为 `finish_reason=stop` 触发退出，而前两轮 `finish_reason=tool_calls` 表示仍需继续。现象关联判断合理，但当前源码真正分支条件是 `has_tool_calls = bool(message.tool_calls)`；本次 `finish_reason` 与它一致。`FINAL ANSWER:` 不是正常文本终止的必要条件，待源码段复查。 |
 
 必须分开核对：模型提出动作、Harness 实际执行、观察进入下一轮、模型基于观察作出新决策、循环正常终止。任一项成立都不能自动推出后面各项成立。
 
