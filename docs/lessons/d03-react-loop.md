@@ -71,6 +71,8 @@ $env:PYTHONIOENCODING = 'utf-8'
 python -m uv run --extra ch1 python main.py --help
 ```
 
+**步骤 A 真实证据**：2026-10-16 学员在 `F:\AIStudy\vendor\ai-agent-book\chapter1\context` 的 PowerShell 中实跑成功。帮助输出确认 `--mode single`、`--provider ollama`、`--context-mode full/no_history`、`--model` 与 `--output` 均存在。帮助末尾的示例使用 Bash 反斜杠换行，正式 PowerShell 实验改用单行命令。
+
 **步骤 B：运行基线**（收到步骤 A 的输出并完成预测后再给）：
 
 ```powershell
