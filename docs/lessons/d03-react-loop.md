@@ -117,6 +117,8 @@ PDF 解析期间出现 `incorrect startxref pointer(1)` 与 `parsing for Object 
 
 **执行与回传源码解释**：学员准确指出 `868 result = self._execute_tool(...)` 才真正执行工具并取得返回值；`875 self.trajectory.tool_calls.append(...)` 只是保存本地审计记录；`893 messages.append(tool_msg)` 才把包含角色、调用 ID 和结果内容的消息加入累计轨迹。若缺少 `893`，即使本地工具和审计均成功，下一轮 Model 仍看不到结果。该段解释通过。
 
+**`no_history` 源码解释**：学员根据 `660-692` 判断每轮请求保留 `system/user`，并指出不会保留前轮的助手决策、工具调用和工具结果。补全角色表述：被丢弃的是 `assistant` 与 `tool` 两类历史消息；前者承载决策和 `tool_calls`，后者承载观察结果。因此即使 Harness 本地执行成功，下一轮请求仍像首次接到任务。源码注释中的“倾向于重复首个动作”是待实测的解释假设，不是必然结果。该段解释通过。
+
 ## 6. 单变量对照：移除上一轮轨迹
 
 先问：**保持工具、模型与任务都不变，只把 `full` 改为 `no_history`；Harness 本地仍会执行工具，但下一轮模型输入会少什么？你预计循环可能怎样表现？** 等学员回答后再运行。
