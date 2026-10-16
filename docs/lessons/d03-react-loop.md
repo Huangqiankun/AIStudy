@@ -91,9 +91,9 @@ PDF 解析期间出现 `incorrect startxref pointer(1)` 与 `parsing for Object 
 
 | 片段 | 真实摘录 / 证据字段 | 本轮 Model 看见什么或决定什么 | Harness / Environment 做什么 | 学员解释 |
 |---|---|---|---|---|
-| 首轮请求 | `api_turns[0].request.messages` 角色为 `system,user`；顶层声明 4 个工具 | 只看见任务、系统指令和可选工具，尚未看见 PDF 正文 | 尚未执行本轮工具 | 待回答 |
-| 首轮响应与执行 | 响应为 `parse_pdf(call_t12nr5lz)`；日志随后记录成功解析 1 页 | 决定读取用户给出的路径 | Harness 执行 `parse_pdf` 并取得正文 | 待回答 |
-| 下一轮请求 | `api_turns[1].request.messages` 角色为 `system,user,assistant,tool`；`tool_call_id=call_t12nr5lz` | 首次看见包含日本办公室金额的真实正文 | Harness 将首轮 assistant 决策和 tool 观察组装进请求 | 待回答 |
+| 首轮请求 | `api_turns[0].request.messages` 角色为 `system,user`；顶层声明 4 个工具 | 只看见任务、系统指令和可选工具，尚未看见 PDF 正文 | 尚未执行本轮工具 | 学员已能根据后续请求判断首轮尚无正文；与下一行一起解释。 |
+| 首轮响应与执行 | 响应为 `parse_pdf(call_t12nr5lz)`；日志随后记录成功解析 1 页 | 决定读取用户给出的路径 | Harness 执行 `parse_pdf` 并取得正文 | 学员用调用 ID 与工具结果配对，核心正确；字段名校准为上一轮 `assistant.tool_calls[0].id`，不是两边都叫 `tool_call_id`。 |
+| 下一轮请求 | `api_turns[1].request.messages` 角色为 `system,user,assistant,tool`；`tool_call_id=call_t12nr5lz` | 首次看见包含日本办公室金额的真实正文 | Harness 将首轮 assistant 决策和 tool 观察组装进请求 | 学员指出 `assistant.tool_calls[0].id == tool.tool_call_id == call_t12nr5lz` 证明配对，且 `role=tool` 的 `content` JSON 内页文本包含 PDF 正文。解释通过。 |
 | 后续动作 | 第 2 轮请求 `convert_currency(call_61inq4cz)`，参数为 `380000000, JPY, USD`；工具返回 `2541806.02` | 从 PDF 观察提取金额并决定换算 | Harness 执行换算并追加结果 | 待回答 |
 | 终止响应 | 第 3 轮请求角色为 `system,user,assistant,tool,assistant,tool`；响应 `finish_reason=stop`、无 `tool_calls` | 看见两次真实工具结果后生成最终文本 | Harness 因响应无工具调用而在第 3 轮退出 | 待回答 |
 
