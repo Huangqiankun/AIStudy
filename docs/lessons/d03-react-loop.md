@@ -165,6 +165,8 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 **理解检查 1 换例复查**：在天气工具例子中，学员正确判断 `assistant.tool_calls=get_weather(...)` 由 Model 产生、属于 Action；`role=tool, content=...` 是下一轮 Model 请求中的 Observation。经追问后明确由 Harness 构造并 append `role=tool` 消息。Model / Harness / Environment 边界及“请求动作不等于返回结果”已校准，概念复述通过。
 
+**理解检查 2**：面对已进入下一轮请求的 `Unsupported currency: JPX` 工具错误，学员预测 Model 可能停止并报告错误，也可能把 JPX 识别为笔误并推测 JPY；并指出不同模型可能采取不同策略，不能断言必然纠正。核心通过。校准：没有重复采样或统计证据时不应称某分支“大概率”；可能行为还包括修正参数重试、请求用户澄清或选择其他动作。错误反馈进入上下文只提供纠错机会，不保证纠错成功。结果预测通过。
+
 ## 8. 可选 AI 代码演示
 
 默认不安排 Kotlin 或 Python 编程作业。真实 JSON 与 `agent.py` 的循环足以展示机制；若学员需要，再在本讲义内补最小示意，不增加依赖或另建工程。
