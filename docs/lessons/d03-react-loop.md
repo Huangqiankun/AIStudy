@@ -137,7 +137,9 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据证据讨论 | 待提出重复或换任务验证方法 |
+| `lesson-d03-comparison.json` 显示 10 轮请求均只有 `system,user`，每轮都请求并成功执行 `parse_pdf`，共 10 次工具调用；没有 `convert_currency`，没有最终文本，`completed=False`。 | 与 `no_history` 删除 `assistant/tool` 历史、使每轮模型都像首次接到任务相容；本地执行成功没有变成模型可见的观察。 | 本次恰好重复首个动作直到上限，不代表所有模型或采样必然如此；可重复同条件或换模型/任务，检查是否仍表现为重复、改道或提前文本回答。 |
+
+**对照真实证据**：2026-10-16 22:08–22:09，学员实跑 `ollama / qwen3:8b / no_history`，产物为实验目录下的 `lesson-d03-comparison.json`。10 个 `api_turns[].request.messages` 均为 2 条、角色序列 `system,user`；10 个响应均为 `finish_reason=tool_calls` 且工具名均为 `parse_pdf`，参数路径相同；本地日志每轮均记录 `Successfully parsed PDF with 1 pages`。运行达到 `Iteration 10/10` 后结束，汇总为 `Iterations: 10 / Tool Calls: 10 / Terminal response completed: False`。这证明本次失败点不是 PDF 解析器未执行，而是观察未进入下一轮模型请求，循环无法从“读取”推进到“换算”。
 
 ## 7. 理解检查：每次只问一题
 
