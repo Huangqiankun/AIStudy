@@ -81,7 +81,9 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 **准备观察什么**：不预设模型会采用固定轮数或一次成功。分别核对工具是否执行、结果是否进入下一轮请求、下一步是否使用了先前观察，以及最终文本出现时是否没有新的 `tool_calls`。
 
-**真实证据**：待学员运行并贴回输出。记录日期、完整命令、退出状态、实际模型与产物位置；产物留在被忽略的实验目录。
+**基线真实证据**：2026-10-16 21:12–21:13，学员在 PowerShell 中使用 `ollama / qwen3:8b / full` 实跑成功，产物为实验目录下的 `lesson-d03-baseline.json`。共 3 次模型调用、2 次工具调用：第 1 轮模型请求 `parse_pdf(call_t12nr5lz)`，工具成功解析 1 页；第 2 轮请求中出现与该 ID 配对的 `tool` 消息，正文含 `Japan Office: ¥380,000,000 JPY`，模型随后请求 `convert_currency(call_61inq4cz, amount=380000000, JPY→USD)`；第 3 轮请求含换算工具结果 `converted_amount=2541806.02`，模型返回无 `tool_calls` 的最终文本，Harness 记录 `stopping after iteration 3`。`completed=True` 只证明收到终止文本；本次答案的数值依据还需分别与两条 `tool.content` 核对。
+
+PDF 解析期间出现 `incorrect startxref pointer(1)` 与 `parsing for Object Streams` warning，但随后明确记录 `Successfully parsed PDF with 1 pages`，且真实正文进入下一轮请求，因此不能仅凭 warning 判定失败。第 1 轮可见 reasoning 曾举出假设值 `5,000,000 JPY`；它没有被当作工具参数，下一轮实际动作使用的是工具正文中的 `380,000,000 JPY`，可用于区分“模型生成的推演文字”和“环境观察证据”。
 
 ## 4. 逐段读真实轨迹
 
@@ -89,11 +91,11 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 | 片段 | 真实摘录 / 证据字段 | 本轮 Model 看见什么或决定什么 | Harness / Environment 做什么 | 学员解释 |
 |---|---|---|---|---|
-| 首轮请求 | 待运行 | 待观察 | 尚未执行本轮工具 | 待回答 |
-| 首轮响应与执行 | 待运行 | 待观察 | 待观察 | 待回答 |
-| 下一轮请求 | 待运行 | 待观察 | 将此前消息组装进请求 | 待回答 |
-| 后续动作 | 待运行 | 待观察 | 待观察 | 待回答 |
-| 终止响应 | 待运行 | 待观察 | 循环退出 | 待回答 |
+| 首轮请求 | `api_turns[0].request.messages` 角色为 `system,user`；顶层声明 4 个工具 | 只看见任务、系统指令和可选工具，尚未看见 PDF 正文 | 尚未执行本轮工具 | 待回答 |
+| 首轮响应与执行 | 响应为 `parse_pdf(call_t12nr5lz)`；日志随后记录成功解析 1 页 | 决定读取用户给出的路径 | Harness 执行 `parse_pdf` 并取得正文 | 待回答 |
+| 下一轮请求 | `api_turns[1].request.messages` 角色为 `system,user,assistant,tool`；`tool_call_id=call_t12nr5lz` | 首次看见包含日本办公室金额的真实正文 | Harness 将首轮 assistant 决策和 tool 观察组装进请求 | 待回答 |
+| 后续动作 | 第 2 轮请求 `convert_currency(call_61inq4cz)`，参数为 `380000000, JPY, USD`；工具返回 `2541806.02` | 从 PDF 观察提取金额并决定换算 | Harness 执行换算并追加结果 | 待回答 |
+| 终止响应 | 第 3 轮请求角色为 `system,user,assistant,tool,assistant,tool`；响应 `finish_reason=stop`、无 `tool_calls` | 看见两次真实工具结果后生成最终文本 | Harness 因响应无工具调用而在第 3 轮退出 | 待回答 |
 
 必须分开核对：模型提出动作、Harness 实际执行、观察进入下一轮、模型基于观察作出新决策、循环正常终止。任一项成立都不能自动推出后面各项成立。
 
