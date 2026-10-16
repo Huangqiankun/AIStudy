@@ -163,6 +163,8 @@ python -m uv run --extra ch1 python main.py --mode single --provider ollama --mo
 
 **理解检查 1 首次回答**：学员认为第 1 轮 `finish_reason=tool_calls` 表示使用 `parse_pdf` 返回结果，第 2 轮请求的 `role=tool` 传入解析结果并声明 `convert_currency`，Model 根据任务决定换算；并将职责概括为 Model 判断调用工具或回答、Harness 调用工具、轨迹保存全局对话记录。主线基本正确，但有两处需校准：`finish_reason=tool_calls` 表示模型响应提出工具调用请求，不表示结果已经返回；Harness 执行后追加的 `role=tool` 才承载结果。轨迹是动态消息历史，不等于每轮完整上下文；本课基本式为“静态前缀（system + tools）+ 轨迹”。待换例复查。
 
+**理解检查 1 换例复查**：在天气工具例子中，学员正确判断 `assistant.tool_calls=get_weather(...)` 由 Model 产生、属于 Action；`role=tool, content=...` 是下一轮 Model 请求中的 Observation。经追问后明确由 Harness 构造并 append `role=tool` 消息。Model / Harness / Environment 边界及“请求动作不等于返回结果”已校准，概念复述通过。
+
 ## 8. 可选 AI 代码演示
 
 默认不安排 Kotlin 或 Python 编程作业。真实 JSON 与 `agent.py` 的循环足以展示机制；若学员需要，再在本讲义内补最小示意，不增加依赖或另建工程。
