@@ -25,6 +25,7 @@
 | 1 | 2026-10-15 | [Agent 三要素（新版重讲）](lessons/d01-agent-three-elements.md) | ✅ | 曾混淆 LLM 参数选择、Harness 传参和工具执行；经真实轨迹与 A/B/C 定位题后通过 |
 | 2 | 2026-10-15 | [观察空间与动作空间](lessons/d02-observation-action-space.md) | ✅ | 曾混淆审计记录与模型消息、接口可用与必定调用；经真实 PDF 基线、`no_tool_calls` 对照和换例复查后通过 |
 | 3 | 2026-10-16 | [ReAct 循环](lessons/d03-react-loop.md) | ✅ | 曾混淆工具调用请求与结果返回、结果已回传后的故障边界；经 `full/no_history` 对照、源码与换例复查后通过 |
+| 4 | 2026-10-17 | [编排模式](lessons/d04-orchestration-patterns.md) | ✅ | 初始误判 LLM 可跳过固定节点；经本地桩对照、源码与控制流/记录复查后通过 |
 
 ---
 
