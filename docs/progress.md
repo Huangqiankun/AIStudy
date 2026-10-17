@@ -26,6 +26,7 @@
 | 2 | 2026-10-15 | [观察空间与动作空间](lessons/d02-observation-action-space.md) | ✅ | 曾混淆审计记录与模型消息、接口可用与必定调用；经真实 PDF 基线、`no_tool_calls` 对照和换例复查后通过 |
 | 3 | 2026-10-16 | [ReAct 循环](lessons/d03-react-loop.md) | ✅ | 曾混淆工具调用请求与结果返回、结果已回传后的故障边界；经 `full/no_history` 对照、源码与换例复查后通过 |
 | 4 | 2026-10-17 | [编排模式](lessons/d04-orchestration-patterns.md) | ✅ | 初始误判 LLM 可跳过固定节点；经本地桩对照、源码与控制流/记录复查后通过 |
+| 5 | 2026-10-17 | [Harness 五要素](lessons/d05-harness-five-elements.md) | ✅ | 曾混淆输出、验证与纠正，并把用户症状当权威失败证据；经真实 AST 拦截对照、源码与三层定位复查后通过 |
 
 ---
 
