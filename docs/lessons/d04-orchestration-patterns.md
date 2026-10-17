@@ -190,6 +190,8 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$c
 
 **理解检查 2 Android 换例复查**：面对只看到 `RESULT_OK` 分支、实际返回 `RESULT_CANCELED` 的 `ActivityResultCallback`，学员判断不能断言界面一定一直 Loading，只能确定收到取消结果，并需继续检查回调处理。经补充明确还应检查外层 `finally`、统一状态收敛、生命周期回调或观察者是否关闭 Loading。已能区分“缺少显式分支”与“已知具体症状”，结果预测通过。
 
+**理解检查 3 首次回答**：面对两次轨迹都显示 `rewrite → image_generate`，学员直接判断为开发者写死的固定工作流。证据不足：固定工作流与自主 Agent 都可能产生相同的表面顺序，重复两次也不能证明路由权归属。需进一步检查源码是直接顺序调用，还是动作来自 Model 响应的 `tool_calls`；轨迹还应区分 Model 提议、Harness 执行与事后节点记录。待二选一源码复查。
+
 ## 8. 可选 AI 代码演示
 
 本课的 PowerShell 探针由讲师提供完整代码，学员只需预测、运行、观察和解释；不要求修改 Python。探针通过运行时替换联网叶子函数来隔离编排路径，不写入 `vendor/`，不增加依赖。
