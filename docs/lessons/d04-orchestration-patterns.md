@@ -164,6 +164,8 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$c
 
 **对照真实证据**：学员在同一 PowerShell 会话中仅替换 `$probe` 的 `requirement` 字符串，并继续采用 UTF-8 Base64 传输。输出确认新文本同时出现在 `requirement` 与 `events[0].input`，说明干预生效；调用与节点顺序没有变化。该实验验证的是教材真实编排函数的控制流，不验证外部 LLM 对自然语言的服从能力。
 
+**学员首次对照解释**：认为程序是“按照 `nodes` 标准执行”，并感觉现象来自工作流固定顺序，但尚不能指出具体组件。方向上已识别固定工作流，角色上需校准：`nodes.append(...)` 是执行后的轨迹记录，不是调度依据；真正直接发起调用的是 Harness 编排函数 `run_workflow_route()` 中的 `rewrite_prompt(...)` 与 `generate_image_wanx(...)`。本实验用 `fake_rewrite` 替代了真实 LLM，因此不能从该结果判断“LLM 是否忽略用户”。待用“删记录但保留调用”的假设题复查。
+
 ## 7. 理解检查：每次只问一题
 
 1. **概念复述**：一个 LLM 参与多个固定节点的系统，为什么仍可能是工作流？
