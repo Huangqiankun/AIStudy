@@ -105,7 +105,9 @@ $probe | python -m uv run --extra ch1 python -
 
 记录桩的输出内容是模拟数据；`run_workflow_route()` 对两个桩函数的调用顺序、参数传递和节点组装是教材真实代码实际执行的证据。
 
-**真实证据**：待学员运行并贴回输出。
+**首次基线尝试**：2026-10-17 学员执行 `$probe | python -m uv run --extra ch1 python -`，真实调用顺序和节点记录均为 `rewrite → image_generate`，但 `requirement`、`events[0].input` 与改写后的 prompt 中中文全部变为 `?????????`。这说明 Windows PowerShell 经原生程序 stdin 管道传递脚本文本时发生编码损坏；由于实验输入未被忠实送达，本次只保留为环境故障证据，不能作为有效基线。下一步保持探针与输入不变，改用 Unicode 命令行参数 `python -c $probe` 重跑。
+
+**有效基线真实证据**：待学员重跑并贴回输出。
 
 ## 4. 逐段读真实轨迹
 
