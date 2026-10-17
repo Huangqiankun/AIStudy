@@ -160,7 +160,9 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$c
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据源码与轨迹解释 | 若要支持跳过生图，应把路由判断放在哪里，是否应交给 Model？ |
+| 2026-10-17 对照输入已变为“只改写提示词，不要生成图片”；`events` 仍为 `rewrite → generate`，`nodes` 仍为 `rewrite → image_generate` | 待学员根据 `pipeline.py:352-357` 解释；记录桩没有真实 LLM，不能把本次现象表述为“LLM 忽略了用户” | 若要支持跳过生图，应把路由判断放在哪里，是否应交给 Model？ |
+
+**对照真实证据**：学员在同一 PowerShell 会话中仅替换 `$probe` 的 `requirement` 字符串，并继续采用 UTF-8 Base64 传输。输出确认新文本同时出现在 `requirement` 与 `events[0].input`，说明干预生效；调用与节点顺序没有变化。该实验验证的是教材真实编排函数的控制流，不验证外部 LLM 对自然语言的服从能力。
 
 ## 7. 理解检查：每次只问一题
 
