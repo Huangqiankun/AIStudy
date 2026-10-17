@@ -134,6 +134,8 @@ $probe | python -m uv run --extra ch1 python -
 
 本课精读 `pipeline.py:348-367`；Day 3 的 ReAct 循环只作为已完成的对照证据，不重复通读。
 
+**源码读取证据**：2026-10-17 学员在自己的 PowerShell 中读取 `pipeline.py:348-367`。`352` 调用 `rewrite_prompt(requirement)`，`355-357` 随后直接调用 `generate_image_wanx(rewrite["prompt"], rewrite["negative_prompt"])`，`353` 与 `358-367` 分别追加两个节点记录。下一步由学员判断这段代码中的路由权归属。
+
 ## 6. 单变量对照：只改变用户需求文本
 
 先问：**若输入改成“只改写提示词，不要生成图片”，同一个工作流会不会跳过第二步？先说明依据，再运行。**
