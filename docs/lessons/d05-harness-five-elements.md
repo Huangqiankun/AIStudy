@@ -24,6 +24,10 @@ Android / HarmonyOS 类比：Harness 类似 OkHttp Interceptor 链叠加 runtime
 
 **概念确认问题**：支付 Agent 已拿到订单上下文，也有 `refund(orderId, amount)` 工具。如果它直接按 Model 给出的参数调用并把工具返回原样展示，五要素里已经有什么，还缺什么？先说判断依据，不要求背英文名。
 
+**学员首次回答**：正确识别订单信息属于 Context、`refund` 属于 Tools；把“展示结果”误归为 Correct，把输出格式封装误归为 Verify，并把“原样展示”直接当成缺少 Constrain 的证据。经退款例子校准：Constrain 检查执行前权限与业务边界，Verify 依据权威状态判断结果，Correct 在验证失败后重试、回退或转人工；输出格式不能证明业务正确。
+
+**换例复查**：学员将“退款金额不超过实付金额”归为 Constrain，将“调用后查询状态是否为 `REFUNDED`”归为 Verify，将“未退款则按幂等键重试、再失败转人工”归为 Correct，且依据均正确。概念边界通过。
+
 ## 2. 实验前预测
 
 - 固定任务：最终结果必须为数字 `14`。
@@ -33,6 +37,10 @@ Android / HarmonyOS 类比：Harness 类似 OkHttp Interceptor 链叠加 runtime
 - 观察点：`events` 中每个阶段的输入与结构化结果；不能只看最终值。
 
 预测问题：两种表达式经过同一条 Harness 链时，哪些阶段的事件会相同，哪些可能不同？最终结果如果相同，能否说明两次执行过程一样可靠？
+
+**学员基线预测**：`Constrain=数值`、`Verify=true`、`Correct=none`、`Final=14`。
+
+**学员对照预测**：首次 `Constrain=数值`、`Verify=false`，随后 `Correct=fallback`，备用计算验证通过并得到 `Final=14`。已校准记录结构：进入 `fallback` 后不会再出现第二个 `Correct=none`；首次工具边界究竟返回数值还是错误，保留为待实测判断。
 
 ## 3. 运行实验
 
@@ -45,6 +53,8 @@ Set-Location 'F:\AIStudy\vendor\ai-agent-book\chapter1\context'
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 ```
+
+**步骤 A 真实证据**：2026-10-17 学员在自己的 PowerShell 中执行成功；当前位置为 `F:\AIStudy\vendor\ai-agent-book\chapter1\context`，两个 UTF-8 环境变量已在当前会话设置。
 
 **步骤 B：运行基线探针**（收到步骤 A 输出后再给）：
 
@@ -91,6 +101,8 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 ```
 
 `constrain` 事件记录工具边界给出的实际结果；它是否实施了语法限制，必须继续追到 `calculate()` 和 `safe_eval()` 源码，不能只凭事件名下结论。
+
+**有效基线真实证据**：2026-10-17 学员亲自运行。日志显示 `Calculating: 2 + 3 * 4`；`context.value.expression` 与 `tool.arguments.expression` 均为原输入；工具边界返回 `result=14,type=int`；`verify.passed=true`；`correct.action=none`；`final.result=14`。本次观察与学员基线预测一致，但只证明当前源码和当前输入的一次行为。
 
 ## 4. 逐段读真实轨迹
 
