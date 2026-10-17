@@ -63,6 +63,8 @@ $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 ```
 
+**步骤 A 真实证据**：2026-10-17 学员在自己的 PowerShell 中执行成功；当前位置为 `F:\AIStudy\vendor\ai-agent-book\chapter1\image-gen-workflow`，`PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`。尚未运行目标探针。
+
 **步骤 B：运行基线探针**（收到步骤 A 输出后再给；完整探针在课堂当步提供）：
 
 ```powershell
