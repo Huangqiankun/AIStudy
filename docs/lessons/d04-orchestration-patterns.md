@@ -100,7 +100,8 @@ print(json.dumps({
     "nodes": [node["node"] for node in result["nodes"]],
 }, ensure_ascii=False, indent=2))
 '@
-$probe | python -m uv run --extra ch1 python -
+$payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($probe))
+python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$payload').decode('utf-8'))"
 ```
 
 记录桩的输出内容是模拟数据；`run_workflow_route()` 对两个桩函数的调用顺序、参数传递和节点组装是教材真实代码实际执行的证据。
@@ -136,14 +137,20 @@ $probe | python -m uv run --extra ch1 python -
 
 **源码读取证据**：2026-10-17 学员在自己的 PowerShell 中读取 `pipeline.py:348-367`。`352` 调用 `rewrite_prompt(requirement)`，`355-357` 随后直接调用 `generate_image_wanx(rewrite["prompt"], rewrite["negative_prompt"])`，`353` 与 `358-367` 分别追加两个节点记录。下一步由学员判断这段代码中的路由权归属。
 
+**学员源码解释**：判断即使 `rewrite_prompt()` 返回“不要生图”的语义，工作流也不会跳过第二步；`355-357` 由编排代码直接发起 `generate_image_wanx()` 调用，且这段函数中没有让 LLM 决定“调用或跳过”的条件分支。解释正确：路由权属于 `run_workflow_route()` 的确定性代码，不属于改写节点中的 LLM。
+
 ## 6. 单变量对照：只改变用户需求文本
 
 先问：**若输入改成“只改写提示词，不要生成图片”，同一个工作流会不会跳过第二步？先说明依据，再运行。**
 
+**对照前修正预测**：学员最初认为 LLM 会理解用户语义并跳过生图；读取真实源码后修正为不会跳过，因为第二个函数调用由编排代码无条件发起，当前函数中不存在语义路由分支。接下来用真实轨迹检验修正后的预测。
+
 保持同一 PowerShell 会话，只替换探针里的输入文本：
 
 ```powershell
-$probe.Replace('帮我画一盆窗台绿植', '只改写提示词，不要生成图片') | python -m uv run --extra ch1 python -
+$comparisonProbe = $probe.Replace('帮我画一盆窗台绿植', '只改写提示词，不要生成图片')
+$comparisonPayload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($comparisonProbe))
+python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$comparisonPayload').decode('utf-8'))"
 ```
 
 - 唯一改变：`requirement` 字符串。
