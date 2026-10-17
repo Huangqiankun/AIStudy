@@ -129,6 +129,10 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 本课精读约 20–40 行：以 `agent.py:262-282` 和 `calc_sandbox.py:66-110` 中与本次输入直接相关的分支为主，不整段照抄。
 
+**源码读取证据**：2026-10-17 学员在自己的 PowerShell 中读取 `agent.py:262-282` 与 `calc_sandbox.py:66-90`。前者在 `272` 调用 `safe_eval()`，成功时于 `274-278` 返回数值结构，失败时于 `280-282` 捕获异常并返回 `{"error": ...}`；后者在 `87-90` 将未列入白名单的 `Attribute` 等节点拒绝。
+
+**学员源码解释**：能沿真实代码说明 `ast.Attribute → calc_sandbox.py:90 抛出 UnsafeExpression → agent.py:280 捕获 → agent.py:282 返回结构化错误`，并据此把对照预测从首次“返回数值”修正为首次返回错误、`Verify=false`、进入 `fallback`。源码输入、处理、输出解释通过。
+
 ## 6. 单变量对照
 
 先预测，再只替换探针末行的表达式：
@@ -143,6 +147,8 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$c
 - 保持不变：任务、期望值、工具接口、白名单、验证条件、纠正策略和输出字段。
 - 先核对干预生效，再比较每个阶段；不能只比较 `final`。
 - 一次对照只证明当前源码对这两个输入的行为，不能推断白名单覆盖了所有攻击形式。
+
+**对照真实证据**：2026-10-17 学员在同一 PowerShell 会话中只把末行输入从 `2 + 3 * 4` 替换为 `().__class__`。日志先记录 `Calculating: ().__class__`，随后出现 `unsupported syntax: Attribute`；`constrain.tool_result` 为结构化错误，`verify.passed=false`；`correct.action=fallback` 后再次调用原工具计算 `2 + 3 * 4`，`correct.verified=true`；最终 `final.result=14`。实测与学员读取源码后的修正预测一致。
 
 ## 7. 理解检查：每次只问一题
 
