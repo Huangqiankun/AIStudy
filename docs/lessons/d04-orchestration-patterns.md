@@ -107,6 +107,8 @@ $probe | python -m uv run --extra ch1 python -
 
 **首次基线尝试**：2026-10-17 学员执行 `$probe | python -m uv run --extra ch1 python -`，真实调用顺序和节点记录均为 `rewrite → image_generate`，但 `requirement`、`events[0].input` 与改写后的 prompt 中中文全部变为 `?????????`。这说明 Windows PowerShell 经原生程序 stdin 管道传递脚本文本时发生编码损坏；由于实验输入未被忠实送达，本次只保留为环境故障证据，不能作为有效基线。下一步保持探针与输入不变，改用 Unicode 命令行参数 `python -c $probe` 重跑。
 
+**第二次基线尝试**：`python -m uv run --extra ch1 python -c $probe` 在 Python 解析阶段报 `SyntaxError: unterminated string literal`，错误位置显示内部引号在 Windows PowerShell 向原生程序组装多行参数时已损坏；目标编排函数尚未运行，不能作为行为证据。下一步把同一 `$probe` 编码为纯 ASCII Base64，再在 Python 内解码执行，避免 stdin 编码与命令行引号两类传输问题。
+
 **有效基线真实证据**：待学员重跑并贴回输出。
 
 ## 4. 逐段读真实轨迹
