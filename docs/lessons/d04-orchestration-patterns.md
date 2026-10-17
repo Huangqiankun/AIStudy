@@ -109,7 +109,7 @@ $probe | python -m uv run --extra ch1 python -
 
 **第二次基线尝试**：`python -m uv run --extra ch1 python -c $probe` 在 Python 解析阶段报 `SyntaxError: unterminated string literal`，错误位置显示内部引号在 Windows PowerShell 向原生程序组装多行参数时已损坏；目标编排函数尚未运行，不能作为行为证据。下一步把同一 `$probe` 编码为纯 ASCII Base64，再在 Python 内解码执行，避免 stdin 编码与命令行引号两类传输问题。
 
-**有效基线真实证据**：待学员重跑并贴回输出。
+**有效基线真实证据**：2026-10-17 学员将同一 `$probe` 编码为 UTF-8 Base64，再由 Python 解码执行成功。`requirement` 与 `events[0].input` 均原样保留“帮我画一盆窗台绿植”；真实事件顺序为 `rewrite → generate`，其中第二个事件收到 `prompt="rewritten::帮我画一盆窗台绿植"`；返回值的 `nodes` 为 `rewrite → image_generate`。这证明本次确实调用了两个记录桩并完成参数传递，但仅凭表面顺序还不能判断节点路由由代码还是 Model 控制，需结合源码。
 
 ## 4. 逐段读真实轨迹
 
