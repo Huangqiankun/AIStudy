@@ -193,6 +193,8 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 **理解检查 1（概念复述）**：首次能说明三层逐层兜底，但把上下文层主要表述为提示词/RAG，把执行层表述成 LLM 自己判断。校准后正确说明：由 Model 上下文之外的 Harness、权限系统或人工审批，在动作生效前独立判断；拒绝时先记录 `approval` 证据，再以 `return` 强制退出并阻止动作。概念复述通过。
 
+**理解检查 2（结果预测）**：在 `enforced + risk=high + HUMAN_APPROVED=True` 条件下，首次多预测了 `warning`；校准后得到 `events` 的准确顺序 `proposal → risk → tool_result`，并区分数组外的 `final.status=executed`。同时主动指出当前轨迹未记录 `approval` 或 `HUMAN_APPROVED=True`，因此无法审计批准者与批准时间。结果预测通过。
+
 ## 8. 可选 AI 代码演示
 
 本课探针由讲师完整提供，学员负责预测、运行、观察与解释；不要求修改 Python。若学员希望继续，可另做“金额降到阈值内”或“人工批准为真”的单变量扩展，但不作为本课硬性作业，也不与主对照同时改变。
