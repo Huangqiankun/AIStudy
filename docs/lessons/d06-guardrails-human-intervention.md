@@ -67,6 +67,8 @@ $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 ```
 
+**步骤 A 真实证据**：2026-10-19 学员在自己的 PowerShell 中执行成功；`CurrentPath` 为 `F:\AIStudy\vendor\ai-agent-book\chapter1`，`NO_PROXY=localhost,127.0.0.1,::1`，`PYTHONUTF8=1`，`PYTHONIOENCODING=utf-8`。这只确认环境就绪，尚未执行目标探针。
+
 **步骤 B：运行强制执行边界的基线**（收到步骤 A 输出并完成预测后再给）：
 
 ```powershell
