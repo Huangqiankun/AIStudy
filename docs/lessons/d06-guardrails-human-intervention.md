@@ -131,11 +131,13 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 必须分开核对：Model 是否提出动作、Harness 是否允许动作、工具是否执行、世界状态是否满足业务不变量。课堂探针只覆盖前三项中的最小部分，不伪装成真实退款验证。
 
+**基线逐段剖析**：面对 `approval(required=true, granted=false)`，学员正确判断它不能单独证明未执行，最初理由是“还没看到最终状态”。经校准后理解 `final.status` 也只是同一程序写出的标签，仍需检查工具回执与源码控制流。在反例轨迹同时给出 `approval.granted=false`、`final.status=paused_for_human` 和 `tool_result` 时，学员正确判断护栏没有成功拦截，因为已经出现执行回执。
+
 ## 5. 追到关键源码
 
 本章只给护栏高层骨架，没有现成的退款审批项目；依照项目规则，最小补充代码放在本讲义中，不另建工程、不修改 `vendor/`。
 
-**源码锚点**：`docs/lessons/d06-guardrails-human-intervention.md:80-103` 的内存探针；重点定位 `classify_risk()`、`execute()` 与 `dispatch()`，精读 24 行。
+**源码锚点**：`docs/lessons/d06-guardrails-human-intervention.md:82-105` 的内存探针；重点定位 `classify_risk()`、`execute()` 与 `dispatch()`，精读 24 行。
 
 - 输入：Model 候选调用、外部模式、独立的批准状态。
 - 处理：`classify_risk()` 评级；`dispatch()` 在执行前决定暂停、提醒或调用工具。
