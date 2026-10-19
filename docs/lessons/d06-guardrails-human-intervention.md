@@ -2,7 +2,7 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter1.md` § 护栏与安全性、人工干预（第 464–504 行）
 > 备课材料 `vendor/ai-agent-book/skills/coding-agent-harness/SKILL.md`
-> 备课日期 2026-10-19 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-10-19 ｜ 授课日期 2026-10-19 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。45 分钟为参考，可跨会话；没有实际运行和理解检查时，不填完成状态。
 
@@ -113,7 +113,7 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 **准备观察什么**：不要只看 `final.status`；沿 `proposal → risk → approval/warning → tool_result` 检查动作是否真的越过执行门。`simulated=true` 只证明这次回执来自模拟函数，不代表真实业务成功。
 
-**真实证据**：待学员运行并贴回输出。记录完整命令、退出状态和事件序列；本课不写产物文件。
+**真实证据保存方式**：本课不写产物文件；真实命令、事件序列与学员解释以本讲义中的脱敏摘要保存。
 
 **基线真实证据**：2026-10-19 学员亲自在 PowerShell 中运行。事件依次为 `proposal(call=refund, amount=5000)`、`risk(level=high, mode=enforced)`、`approval(required=true, granted=false)`；没有出现 `warning` 或 `tool_result`，`final.status=paused_for_human`。输出未显示 Python 异常，PowerShell 返回提示符。该观察与校准后的基线预测一致；是否能仅凭事件缺失断定 `execute()` 未调用，仍需结合源码控制流判断。
 
@@ -195,24 +195,26 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 **理解检查 2（结果预测）**：在 `enforced + risk=high + HUMAN_APPROVED=True` 条件下，首次多预测了 `warning`；校准后得到 `events` 的准确顺序 `proposal → risk → tool_result`，并区分数组外的 `final.status=executed`。同时主动指出当前轨迹未记录 `approval` 或 `HUMAN_APPROVED=True`，因此无法审计批准者与批准时间。结果预测通过。
 
+**理解检查 3（故障定位）**：首次提出检查 `advisory` 模式、`approval` 日志和 `tool_result.value`，但把审批日志当成拦截证明，并把 `accepted=true` 当业务成功。校准后能区分：`warning` 只证明提醒；是否拦截需结合工具调用/结果与源码控制流；业务结果需查数据库或支付平台权威状态。换例中先把 `refund_status=FAILED` 直接归因为数据层拦截，经提示后正确保留“失败原因待查”；当给出 `rejection_reason=refund_exceeds_paid_amount` 与约束 `total_refund <= paid_amount` 时，能据此定位数据层护栏。故障定位通过。
+
 ## 8. 可选 AI 代码演示
 
 本课探针由讲师完整提供，学员负责预测、运行、观察与解释；不要求修改 Python。若学员希望继续，可另做“金额降到阈值内”或“人工批准为真”的单变量扩展，但不作为本课硬性作业，也不与主对照同时改变。
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展
-- 尚未理解及证据：待开展
-- 下次从哪一小步继续：待开展
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）
+- 已理解到哪：能区分上下文层、执行层、数据层；能从事件与源码判断提醒、条件命中和强制拦截；能说明高风险审批与失败阈值熔断两类人工干预。
+- 尚未理解及证据：本课无遗留缺口。过程中曾把 `if` 条件、警告或审批日志直接当成拦截证明，也曾把权威状态 `FAILED` 直接归因为数据层护栏；均经反例与换例修正。
+- 下次从哪一小步继续：Day 7 是 buffer 日，只做欠账、复习或休息，不上新课。
+- 状态：✅
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：本课不调用模型；待学员运行
-- 学员的原始预测与后续解释：待回答
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
+- 实际授课日期、用时、停在哪一步：2026-10-19；完成概念、基线、逐段轨迹、源码、单变量对照和三项理解检查；未精确计时。
+- 实验命令、模型、证据位置与必要真实摘录：本课不调用模型；学员在 PowerShell 中以内存探针运行。基线 `enforced` 得到 `proposal → risk(high) → approval(granted=false)`、无 `tool_result`、`paused_for_human`；对照仅改为 `advisory`，得到 `proposal → risk(high) → warning → tool_result`、`executed`。证据为学员真实输出及本讲义摘要。
+- 学员的原始预测与后续解释：基线正确预测不会执行，但最初混入 `warning`；对照最初仍预测审批阻断，经控制流提示后修正。源码阶段从“98 行 if 就是拦截”修正为“98 行判断、100 行 return 强制退出”。最终能用工具回执与数据层拒绝原因区分执行事实、业务结果和失败归因。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过
 - 是否采用代码演示及原因：采用内存中的最小 Python 探针；用于隔离“提示”与“强制执行门”，不产生真实副作用
-- 本次观察、假设、待验证点：待开展
+- 本次观察、假设、待验证点：实测只证明当前探针在两种模式和当前高风险输入下的行为；未验证低风险分支、真实人工批准持久化、真实退款系统或误拒绝率。批准为真时缺少批准者与时间审计事件，是本探针暴露出的可观测性缺口，不作为本课遗留理解问题。
 - 对应备课 skill：`vendor/ai-agent-book/skills/coding-agent-harness/SKILL.md`
-- 进度处理：授课结束或中断后追加 Day 6 日志；仅备课不追加日志、不修改既有完成状态
+- 进度处理：Day 6 已按完成标准追加日志；下一 Day 为 buffer 日，不上新课

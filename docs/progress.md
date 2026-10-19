@@ -27,6 +27,7 @@
 | 3 | 2026-10-16 | [ReAct 循环](lessons/d03-react-loop.md) | ✅ | 曾混淆工具调用请求与结果返回、结果已回传后的故障边界；经 `full/no_history` 对照、源码与换例复查后通过 |
 | 4 | 2026-10-17 | [编排模式](lessons/d04-orchestration-patterns.md) | ✅ | 初始误判 LLM 可跳过固定节点；经本地桩对照、源码与控制流/记录复查后通过 |
 | 5 | 2026-10-17 | [Harness 五要素](lessons/d05-harness-five-elements.md) | ✅ | 曾混淆输出、验证与纠正，并把用户症状当权威失败证据；经真实 AST 拦截对照、源码与三层定位复查后通过 |
+| 6 | 2026-10-19 | [护栏与人工干预](lessons/d06-guardrails-human-intervention.md) | ✅ | 曾把条件判断、警告或审批日志当拦截证明，并把 `FAILED` 直接归因数据层；经强制/提醒对照、源码与证据分层复查后通过 |
 
 ---
 
