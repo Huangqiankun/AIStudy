@@ -52,7 +52,7 @@
 
 **预测问题**：两次运行中，哪些事件你预计都会出现，哪些只会出现在其中一次？只根据“最终打印了 JSON”，能否判断退款动作已越过执行边界？
 
-**学员预测**：待回答。
+**学员预测**：基线首次漏掉 `proposal`，并多写了只属于 `advisory` 分支的 `warning`；但正确判断 `enforced + HUMAN_APPROVED=False` 时不会调用 `execute()`。校准后得到基线事件序列 `proposal → risk → approval`，且无 `tool_result`。对照首次仍预测 `approval` 且不执行；经“只有日志、没有 return/异常”的 Android 控制流例子缩小后，正确判断 `advisory` 会继续到 `execute()`，修正事件序列为 `proposal → risk → warning → tool_result`。
 
 ## 3. 运行实验
 
