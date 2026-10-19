@@ -162,12 +162,12 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 - 唯一改变：`GUARDRAIL_MODE` 从 `enforced` 改为 `advisory`。
 - 保持不变：请求、金额、风险阈值、人工批准状态、风险分类器、执行函数和事件格式。
-- 对照前预测：待回答。
-- 真实轨迹与结果：待运行。
+- 对照前预测：首次仍预测 `approval` 且不执行；经“警告后没有 return/异常”的控制流例子校准，修正为 `proposal → risk → warning → tool_result`，会调用 `execute()`。
+- 真实轨迹与结果：2026-10-19 学员亲自运行；`risk.level` 仍为 `high`，`mode=advisory`，随后依次出现 `warning` 与 `tool_result(ok=true, simulated=true, receipt=refund:u-17:5000)`，`final.status=executed`。与修正预测一致。
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据事件顺序解释 | 若改成低风险金额或得到人工批准，分支会怎样；须另做单变量实验验证 |
+| 同一高风险请求在 `enforced` 下停于 `approval`，在 `advisory` 下出现 `warning → tool_result` | 模式改变了高风险分支的控制流；提醒没有强制阻止副作用 | 若改成低风险金额或得到人工批准，分支会怎样；须另做单变量实验验证 |
 
 一次对照只证明当前代码对当前输入的行为。它不能证明所有高风险动作都被覆盖，也不能证明 `classify_risk()` 的阈值正确；误拒绝与漏放都需要后续评估。
 
