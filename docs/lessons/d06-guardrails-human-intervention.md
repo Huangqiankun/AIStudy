@@ -115,6 +115,8 @@ python -m uv run --extra ch1 python -c "import base64; exec(base64.b64decode('$p
 
 **真实证据**：待学员运行并贴回输出。记录完整命令、退出状态和事件序列；本课不写产物文件。
 
+**基线真实证据**：2026-10-19 学员亲自在 PowerShell 中运行。事件依次为 `proposal(call=refund, amount=5000)`、`risk(level=high, mode=enforced)`、`approval(required=true, granted=false)`；没有出现 `warning` 或 `tool_result`，`final.status=paused_for_human`。输出未显示 Python 异常，PowerShell 返回提示符。该观察与校准后的基线预测一致；是否能仅凭事件缺失断定 `execute()` 未调用，仍需结合源码控制流判断。
+
 ## 4. 逐段读真实轨迹
 
 每次只展示一个片段，等学员解释后继续。
