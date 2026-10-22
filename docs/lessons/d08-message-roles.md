@@ -160,8 +160,8 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 | 片段 | 真实摘录 / 证据字段 | 谁写入 | 协议语义 | 学员解释 |
 |---|---|---|---|---|
 | system + user | 待运行 | 待核对 | 待核对 | 待回答 |
-| assistant.tool_calls | 待运行 | 待核对 | 待核对 | 待回答 |
-| tool result | 待运行 | 待核对 | 待核对 | 待回答 |
+| assistant.tool_calls | `convert_currency(100, USD, CNY)` | 模型 | 请求工具名称与参数，不证明已执行 | 学员识别为工具调用信息；经追问明确这是模型决策证据 |
+| tool result | `converted_amount=724.0, exchange_rate=7.24` | Harness | 执行结果被追加到历史；结合下一次请求与源码才证明送入模型 | 学员起初由最终答案推断模型参考了结果；随后明确缺少下一轮 `role=tool` 时不能作此归因 |
 | final assistant | 待运行 | 待核对 | 待核对 | 待回答 |
 
 始终分开核对：工具是否执行、Harness 用什么角色回传、模型如何响应。最终文本相同或正确，也不能倒推出角色标注正确。
