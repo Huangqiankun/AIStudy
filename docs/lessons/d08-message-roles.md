@@ -2,7 +2,7 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter2.md` § Agent 如何调用大模型：理解 API 的上下文结构（第 41–56 行）
 > 实验 `vendor/ai-agent-book/chapter2/local_llm_serving/`
-> 备课日期 2026-10-22 ｜ 授课日期 2026-10-22 ｜ 状态 ▶
+> 备课日期 2026-10-22 ｜ 授课日期 2026-10-22 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。正式实验和对照均由学员在预测后亲自运行；讲师只核实环境、CLI、源码和命令语法。
 
@@ -159,10 +159,10 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 | 片段 | 真实摘录 / 证据字段 | 谁写入 | 协议语义 | 学员解释 |
 |---|---|---|---|---|
-| system + user | 待运行 | 待核对 | 待核对 | 待回答 |
+| system + user | 系统约束 + 汇率换算请求 | 开发者 / 用户 | 规则来源与任务输入 | 学员能按来源区分，并通过无工具例子修正了对 `assistant` 范围的理解 |
 | assistant.tool_calls | `convert_currency(100, USD, CNY)` | 模型 | 请求工具名称与参数，不证明已执行 | 学员识别为工具调用信息；经追问明确这是模型决策证据 |
 | tool result | `converted_amount=724.0, exchange_rate=7.24` | Harness | 执行结果被追加到历史；结合下一次请求与源码才证明送入模型 | 学员起初由最终答案推断模型参考了结果；随后明确缺少下一轮 `role=tool` 时不能作此归因 |
-| final assistant | 待运行 | 待核对 | 待核对 | 待回答 |
+| final assistant | `100 USD = 724 CNY` | 模型 | 根据当前请求上下文生成回复 | 学员明确最终答案一致不能单独证明工具执行或因果依赖 |
 
 始终分开核对：工具是否执行、Harness 用什么角色回传、模型如何响应。最终文本相同或正确，也不能倒推出角色标注正确。
 
@@ -203,6 +203,12 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 2. **结果预测**：若保留工具结果文本但把 `role=tool` 改成 `role=user`，哪项事实仍成立，哪项证据已经丢失？
 3. **故障定位**：工具日志显示执行成功，而下一次模型请求只有 `system/user/assistant`，没有对应 `tool` 结果；先查模型还是 Harness？用什么字段验证？
 
+**实际检查结果**：
+
+1. 概念通过。学员最初把 `assistant` 限定为工具调用；经无工具对话复查后，能说明它是模型产生的消息，既可含文本也可含 `tool_calls`。
+2. 预测通过。学员最初认为移除顶层 `tools` 会同时让模型看不见已有结果；经 Binder reply Parcel 类比后，能区分“历史中的既有结果仍可读”和“失去再次结构化调用的能力声明”。
+3. 定位通过。学员优先检查 Harness 的结果追加与下一轮请求；随后正确填出 `tools / tool_calls / tool`，区分能力声明、模型调用请求和执行结果回传。
+
 <details><summary>讲师核对要点（学员回答后再展开）</summary>
 
 1. `system` 来自开发者，`user` 来自终端用户，`assistant` 来自模型，`tool` 来自 Harness 执行；`tools` 是请求顶层能力清单。
@@ -213,15 +219,16 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 ## 8. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展。
-- 尚未理解及证据：待开展。
-- 下次从哪一小步继续：待开展。
-- 状态：▶。
+- 已理解到哪：能按产生者解释四种角色，区分顶层 `tools`，并沿 `assistant.tool_calls → Harness 执行 → role=tool → 下一次 messages` 建立证据链。
+- 尚未理解及证据：课堂中曾把 `assistant` 限定为工具调用、把移除 `tools` 误解为删除历史结果、把 `tool_calls` 说成能力声明；均经换例复查修正。
+- 下次从哪一小步继续：Day 9 从本课的角色序列出发，研究带工具调用的多轮如何继续、停止或形成循环。
+- 状态：✅。
 
 ## 9. 讲师备注
 
-- 正式实验未代跑；只运行了 `main.py --help`，核对 `ollama list` 和源码。
-- 基线与对照输出均属于待实测证据，讲义不预填结果。
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
+- 学员亲自运行环境准备、`main.py --help`、基线和角色错标对照；讲师未代跑正式实验。
+- 第一次基线在工具执行和第二次模型请求成功后，因探针不能序列化 Ollama `ToolCall` 而失败；修复探针后重跑成功，未修改 `vendor/` 源码。
+- 实验模型：`qwen3:8b`；基线证据：`chapter2/local_llm_serving/lesson-d08-baseline.json`；对照证据：`lesson-d08-role-user.json`。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过。
 - 对应备课 skill：`vendor/ai-agent-book/skills/context-engineering/SKILL.md`。
-- 本课开始后不立即追加进度日志；课堂确实中断或完成时，再按规则追加 Day 8 状态。
+- 进度处理：Day 8 已完成，向 `docs/progress.md` 追加 `✅` 日志；不修改历史行。
