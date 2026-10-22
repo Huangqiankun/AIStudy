@@ -43,6 +43,7 @@ Harness──tool/result─────────┘
 - 任务与输入：系统规则要求使用工具；用户要求“使用汇率工具把 100 美元换算成人民币”。
 - 固定条件：Ollama、`qwen3:8b`、温度 `0`、同一组工具 schema、同一条第一次 `assistant.tool_calls`、同一个已执行工具结果。
 - 基线观察点：最终保存的 `messages[*].role`、`assistant.tool_calls`、`tool` 消息内容、顶层 `tools` 数量、最终回答。
+- 基线角色预测：学员最初预测 `system → user → assistant → user → assistant`，把第四条误判为调用方消息；经“谁执行并写回结果”的追问后，修正为 `system → user → assistant(tool_calls) → tool → assistant`，并指出第四条由 Harness 写入。
 - 对照唯一变量：重放第二次请求前，只把工具结果消息的 `role` 从 `tool` 改为 `user`；不重新采样第一次决策，不重新执行工具。
 - 预测问题：对照请求会被协议拒绝，还是仍能生成答案？若能生成，能否仅凭答案正确就认定角色可以混用？说明理由。
 - 学员预测：接口会接受错标请求；模型可能把该 `user` 消息视为新的请求，再次调用相应工具，随后可能返回错误，或循环至上限后宣告任务失败。另保留一种待观察可能：模型直接利用结果文本继续回答。
