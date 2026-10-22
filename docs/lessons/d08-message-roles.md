@@ -77,6 +77,11 @@ from pathlib import Path
 import json
 from ollama_native import OllamaNativeAgent
 
+def json_default(value):
+    if hasattr(value, "model_dump"):
+        return value.model_dump(exclude_none=True)
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
 agent = OllamaNativeAgent(model="qwen3:8b")
 agent.conversation_history.append({
     "role": "system",
@@ -90,7 +95,7 @@ payload = {
     "tools": agent._convert_tools_to_ollama_format(),
 }
 Path("lesson-d08-baseline.json").write_text(
-    json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    json.dumps(payload, ensure_ascii=False, indent=2, default=json_default), encoding="utf-8"
 )
 summary = {
     "answer": answer,
@@ -99,7 +104,7 @@ summary = {
     "tool_messages": [m for m in payload["messages"] if m.get("role") == "tool"],
     "tools_count": len(payload["tools"]),
 }
-print(json.dumps(summary, ensure_ascii=False, indent=2))
+print(json.dumps(summary, ensure_ascii=False, indent=2, default=json_default))
 '@
 $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($probe))
 python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$encoded').decode('utf-8'))"
@@ -107,7 +112,9 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 **准备观察什么**：不预设模型一定调用工具；先看 `roles` 是否实际包含四种角色，再分别核对工具调用请求、Harness 结果和最终回答。若模型未调用工具，也保留真实轨迹并分析，不重复抽样挑结果。
 
-**真实证据**：待学员运行并贴回输出。
+**第一次实跑（2026-10-22）**：两次 Ollama `/api/chat` 请求均返回 `200 OK`；模型请求一次 `convert_currency(amount=100, from_currency=USD, to_currency=CNY)`，Harness 执行了该工具。随后讲师探针在保存 JSON 时失败：`TypeError: Object of type ToolCall is not JSON serializable`。这只能证明调用与执行发生过，尚未生成可核对的角色轨迹文件。已在讲义探针中加入对 Ollama SDK `model_dump()` 的转换，等待学员重跑。
+
+**有效基线证据**：待学员用修正探针运行并贴回输出。
 
 ### 步骤 D：运行单变量角色对照
 
