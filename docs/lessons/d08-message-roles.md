@@ -114,7 +114,7 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 **第一次实跑（2026-10-22）**：两次 Ollama `/api/chat` 请求均返回 `200 OK`；模型请求一次 `convert_currency(amount=100, from_currency=USD, to_currency=CNY)`，Harness 执行了该工具。随后讲师探针在保存 JSON 时失败：`TypeError: Object of type ToolCall is not JSON serializable`。这只能证明调用与执行发生过，尚未生成可核对的角色轨迹文件。已在讲义探针中加入对 Ollama SDK `model_dump()` 的转换，等待学员重跑。
 
-**有效基线证据**：待学员用修正探针运行并贴回输出。
+**有效基线实跑（2026-10-22 17:02）**：修正探针成功生成 `lesson-d08-baseline.json`（6659 bytes）。两次 `/api/chat` 均为 `200 OK`；第一次模型消息以 `assistant.tool_calls` 请求 `convert_currency(amount=100, USD→CNY)`，Harness 返回 `role=tool`，内容含 `converted_amount=724.0` 与 `exchange_rate=7.24`，第二次模型消息回答 `100 USD = 724 CNY`。实际角色序列为 `system → user → assistant → tool → assistant`，顶层 `tools` 有 4 项。文件中的 `thinking` 是模型生成的可见字段，不作为内部思维的忠实记录，也不是本课角色判断证据。
 
 ### 步骤 D：运行单变量角色对照
 
