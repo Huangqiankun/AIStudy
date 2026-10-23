@@ -205,6 +205,8 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 - 第 497–503 行：Harness 把已经增长的完整历史再次发给无状态模型，同时仍保留工具定义。
 - 第 507–521 行：最终模型消息进入历史；是否存在 `tool_calls` 决定它是当前实现的结束输出还是普通文本响应。
 
+**学员源码解释（第一段）**：指出 `messages=self.conversation_history` 最直接证明当前累计消息轨迹由 Harness 在本次 API 调用中重新提交。讲师补充：`conversation_history` 是动态消息轨迹，完整请求上下文还包含独立传入的静态 `tools` 能力清单。
+
 关键片段按课堂节奏分小段阅读，总量控制在 20–40 行。Python 只解释列表追加、函数调用和字段配对，不延伸语法教学。
 
 ## 6. 单变量对照
