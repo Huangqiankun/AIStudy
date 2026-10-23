@@ -228,6 +228,8 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 **复盘纠正**：学员先以缺少新的 `role=tool/tool_call_id` 判断没有重跑工具；讲师补充分层顺序：模型再次请求工具的直接证据应先是本次响应中的新 `assistant.tool_calls`，之后 Harness 执行才会产生新 `role=tool`。本次响应第一层就缺失，且对照脚本没有执行循环，因此最终文本正确不能证明工具重跑。
 
+**换例复查**：面对“已有新 `assistant.tool_calls`，但没有执行日志和后续 `role=tool`”的例子，学员起初认为不能证明模型请求；经 Binder `transact/reply` 分层提示后修正并准确填写：`assistant.tool_calls` 只证明模型发出调用请求，执行日志或直接返回值证明 Harness 执行，下一次真实请求中的 `role=tool` 证明该内容进入模型上下文。该卡点已通过换例复查。
+
 ## 7. 理解检查：每次只问一题
 
 1. **概念复述**：为什么模型 API 无状态，却仍能在第二次调用中利用第一次工具结果？
