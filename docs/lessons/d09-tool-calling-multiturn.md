@@ -207,6 +207,8 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 **学员源码解释（第一段）**：指出 `messages=self.conversation_history` 最直接证明当前累计消息轨迹由 Harness 在本次 API 调用中重新提交。讲师补充：`conversation_history` 是动态消息轨迹，完整请求上下文还包含独立传入的静态 `tools` 能力清单。
 
+**学员源码解释（第二段）**：正确区分 `assistant_message.tool_calls` 是模型决定；`results = [run_one(...)]` 是 Harness 真正执行工具；`append(role="tool", tool_call_id=..., content=result)` 是 Harness 把结果写入轨迹；后续 `messages=self.conversation_history` 才把含结果的完整历史送进下一次模型请求。关键源码解释通过。
+
 关键片段按课堂节奏分小段阅读，总量控制在 20–40 行。Python 只解释列表追加、函数调用和字段配对，不延伸语法教学。
 
 ## 6. 单变量对照
