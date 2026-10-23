@@ -183,10 +183,10 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 | 片段 | 真实摘录 / 证据字段 | 模型决定什么 | Harness 执行或组装什么 | 学员解释 |
 |---|---|---|---|---|
-| 第一次请求 | `system → user` | 尚未出现模型决策 | 发送初始消息与工具定义 | 待回答 |
-| 工具调用响应 | `convert_currency(100, USD, CNY)`；ID `call_7ln57gue` | 请求一次汇率工具调用 | 保存 `assistant.tool_calls` | 待回答 |
-| 工具执行 | `tool.content` 含 724.0 与 7.24 | 不适用 | 执行工具并生成 `tool` 消息 | 待回答 |
-| 第二次请求 | `system → user → assistant → tool`；两个 ID 相等 | 收到包含配对结果的请求 | 重放历史与匹配结果 | 待回答 |
+| 第一次请求 | `system → user` | 尚未出现模型决策 | 发送初始消息与工具定义 | 学员能识别这是初始上下文 |
+| 工具调用响应 | `convert_currency(100, USD, CNY)`；ID `call_7ln57gue` | 请求一次汇率工具调用 | 保存 `assistant.tool_calls` | 学员识别为工具请求；经追问明确请求不等于执行 |
+| 工具执行 | `tool.content` 含 724.0 与 7.24 | 不适用 | 执行工具并生成 `tool` 消息 | 学员识别返回内容；需结合执行入口或日志证明实际执行 |
+| 第二次请求 | `system → user → assistant → tool`；两个 ID 相等 | 收到包含配对结果的请求 | 重放历史与匹配结果 | 学员起初把 ID 相等表述为“证明调用对应工具”；修正为 ID 证明请求/结果消息配对，`tool.content` 出现在真实第二次请求证明结果已进入模型上下文 |
 | 最终响应 | 文本使用 7.24 与 724.0 | 生成普通回答，未再请求工具 | 保存模型输出 | 待回答 |
 
 分别核对工具是否执行、结果是否以匹配 ID 进入下一次请求、模型最后输出什么。正确数值、HTTP 200 或程序正常结束都不能替代前两项证据。
