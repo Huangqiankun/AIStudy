@@ -30,6 +30,7 @@
 | 6 | 2026-10-19 | [护栏与人工干预](lessons/d06-guardrails-human-intervention.md) | ✅ | 曾把条件判断、警告或审批日志当拦截证明，并把 `FAILED` 直接归因数据层；经强制/提醒对照、源码与证据分层复查后通过 |
 | 7 | 2026-10-22 | [W1 闭环复盘（buffer）](lessons/d07-week1-buffer-review.md) | ✅ | 曾把被拒绝的原输入预测为数值返回；经结构化错误、源码链与 `Subscript` 换例复查后通过 |
 | 8 | 2026-10-22 | [消息四种角色](lessons/d08-message-roles.md) | ✅ | 曾把 `assistant` 限定为工具调用、混淆历史结果与顶层 `tools`、把 `tool_calls` 当能力声明；经真实四角色轨迹、角色错标对照、源码链与三项复查后通过 |
+| 9 | 2026-10-23 | [带工具调用的多轮](lessons/d09-tool-calling-multiturn.md) | ✅ | 曾把 ID 配对当执行证明、把严格校验当自动重试、混淆调用请求与结果消息；经真实两轮请求、ID 错配对照、源码与三层证据复查后通过 |
 
 ---
 
