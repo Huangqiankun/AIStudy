@@ -135,6 +135,8 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 **准备观察什么**：不预设模型一定调用工具，也不预设恰好两次请求。先看 `api_turns` 的真实数量；若出现工具调用，再核对下一次请求是否同时包含原 `assistant.tool_calls` 与匹配的 `tool` 结果。若模型没有调用工具，也保留真实轨迹并分析，不重复抽样挑结果。
 
+**基线实跑（2026-10-23 15:53）**：学员亲自运行并生成 `lesson-d09-baseline.json`（13148 bytes，SHA-256 `77A50750E0CDB1995A1A0411F10F0A0FDE6613453E0C77B87B32DA345663C8A3`）。两次模型请求均返回 HTTP 200；第一次请求角色为 `system → user`，模型返回一次 `convert_currency(100, USD, CNY)`，调用 ID 为 `call_7ln57gue`。第二次请求角色为 `system → user → assistant → tool`，其中 `assistant.tool_calls[0].id` 与 `tool.tool_call_id` 均为 `call_7ln57gue`；`tool.content` 含 `converted_amount=724.0`、`exchange_rate=7.24`。最终回答使用了 7.24 和 724.0。上述字段分别证明调用请求、工具结果被组装进下一次请求和最终文本一致，不能只用最终文本替代中间证据。
+
 ### 步骤 D：运行单变量 ID 对照
 
 只在基线确实产生第二次请求且包含 `tool` 消息后运行。脚本完整复用第二次请求，只改第一条工具结果的 `tool_call_id`，并保存响应或错误。
@@ -181,11 +183,11 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 | 片段 | 真实摘录 / 证据字段 | 模型决定什么 | Harness 执行或组装什么 | 学员解释 |
 |---|---|---|---|---|
-| 第一次请求 | 待运行 | 待观察 | 发送初始消息与工具定义 | 待回答 |
-| 工具调用响应 | 待运行 | 待观察 | 保存 `assistant.tool_calls` | 待回答 |
-| 工具执行 | 待运行 | 不适用 | 执行工具并生成 `tool` 消息 | 待回答 |
-| 第二次请求 | 待运行 | 待观察 | 重放历史与匹配结果 | 待回答 |
-| 最终响应 | 待运行 | 待观察 | 保存模型输出 | 待回答 |
+| 第一次请求 | `system → user` | 尚未出现模型决策 | 发送初始消息与工具定义 | 待回答 |
+| 工具调用响应 | `convert_currency(100, USD, CNY)`；ID `call_7ln57gue` | 请求一次汇率工具调用 | 保存 `assistant.tool_calls` | 待回答 |
+| 工具执行 | `tool.content` 含 724.0 与 7.24 | 不适用 | 执行工具并生成 `tool` 消息 | 待回答 |
+| 第二次请求 | `system → user → assistant → tool`；两个 ID 相等 | 收到包含配对结果的请求 | 重放历史与匹配结果 | 待回答 |
+| 最终响应 | 文本使用 7.24 与 724.0 | 生成普通回答，未再请求工具 | 保存模型输出 | 待回答 |
 
 分别核对工具是否执行、结果是否以匹配 ID 进入下一次请求、模型最后输出什么。正确数值、HTTP 200 或程序正常结束都不能替代前两项证据。
 
