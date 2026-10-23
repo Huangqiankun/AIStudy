@@ -244,6 +244,12 @@ python -m uv run --extra ch2 python -c "import base64; exec(base64.b64decode('$e
 
 </details>
 
+**实际检查进度**：
+
+1. 概念复述通过。学员起初把 `tool_call_id` 说成校准并确保最终结果；经提示后修正为请求/结果消息的关联键，明确它不能证明工具真实执行或模型最终采用结果。结合源码题，能说明无状态 API 依靠 Harness 重放 `conversation_history` 获得前轮信息。
+2. 结果预测：待检查。
+3. 故障定位：待检查。
+
 卡住时记录具体缺口，换一个最小 Binder token 配对例子补讲，再检查。三项通过且实验、对照、源码讲解实际完成，才记 `✅`。
 
 ## 8. 可选 AI 代码演示
