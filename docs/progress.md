@@ -31,6 +31,7 @@
 | 7 | 2026-10-22 | [W1 闭环复盘（buffer）](lessons/d07-week1-buffer-review.md) | ✅ | 曾把被拒绝的原输入预测为数值返回；经结构化错误、源码链与 `Subscript` 换例复查后通过 |
 | 8 | 2026-10-22 | [消息四种角色](lessons/d08-message-roles.md) | ✅ | 曾把 `assistant` 限定为工具调用、混淆历史结果与顶层 `tools`、把 `tool_calls` 当能力声明；经真实四角色轨迹、角色错标对照、源码链与三项复查后通过 |
 | 9 | 2026-10-23 | [带工具调用的多轮](lessons/d09-tool-calling-multiturn.md) | ✅ | 曾把 ID 配对当执行证明、把严格校验当自动重试、混淆调用请求与结果消息；经真实两轮请求、ID 错配对照、源码与三层证据复查后通过 |
+| 10 | 2026-10-26 | [Chat Template 与 KV Cache](lessons/d10-chat-template-kv-cache.md) | ✅ | 曾把缓存写入当缓存命中；又从源码发现 TTFT 实为完整响应耗时、教材对照混入消息重排；经本机模板、历史收据、修正版单变量探针及三项复查后通过 |
 
 ---
 
