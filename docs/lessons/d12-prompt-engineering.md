@@ -2,7 +2,7 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter2.md` § 提示工程：优化系统提示词（第 602–730 行）
 > 实验 `vendor/ai-agent-book/chapter2/prompt-engineering/`
-> 备课日期 2026-10-26 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-10-26 ｜ 授课日期 2026-10-26 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。45 分钟为参考，可跨会话；没有实际运行和理解检查时，不填完成状态。
 
@@ -50,7 +50,8 @@
 - 目标单变量：`remove_tool_descriptions: false → true`；工具名称、JSON schema 结构和执行实现保留。
 - 观察点：`ablation_config`、每个 task 的 `reward`、成功数、任务错误、原始 `traj` 和 API receipts。
 - 预测问题：你预测这十个任务中，对照组的通过数会更高、更低还是相同？理由是什么？哪些结果会让你修改解释，但仍不足以证明普遍因果？
-- 学员预测：待回答。
+- 学员原始预测：对照组通过数会更低，因为没有工具描述后，LLM 不知道工具用途。
+- 预测边界修正：工具名和参数名仍携带语义，因此“更低”是合理假设而非必然结果；保留原预测，不用实测结果倒推改写。
 
 ## 3. 运行实验
 
@@ -79,7 +80,7 @@ $p = 'runs\exp2-4-kimi-k3-20260730-v7\tool-calling-kimi-k3-baseline_0730121451.j
 
 **准备观察什么**：先确认读的是历史收据，再确认该 arm 的三个消融开关，最后看 reward；不要先用 README 的“预期排序”代替实测。
 
-**真实证据**：待学员运行并贴回输出。记录完整命令、输出与文件路径；不把离线读取说成本次模型调用。
+**真实证据**：学员在 PowerShell 亲自运行。baseline 收据配置为 `tone_style=default`、`randomize_wiki=false`、`remove_tool_descriptions=false`；十个任务 reward 为 `0,1,0,1,1,1,1,1,1,0`，通过 `7/10`。这是离线读取历史收据，不是本次模型调用。
 
 ## 4. 逐段读真实轨迹
 
@@ -87,10 +88,10 @@ $p = 'runs\exp2-4-kimi-k3-20260730-v7\tool-calling-kimi-k3-baseline_0730121451.j
 
 | 片段 | 真实摘录 / 证据字段 | 已能证明 | 仍不能证明 | 学员解释 |
 |---|---|---|---|---|
-| 实验配置 | `run_config`、`ablation_config` | 两个 arm 的目标配置差异 | 实际送给每轮模型的内容逐字符合预期 | 待回答 |
-| 任务判分 | `results[*].reward`、`reward_info` | 该历史任务的环境验收结果 | 差异一定由唯一变量造成 | 待回答 |
-| 模型轨迹 | `results[*].traj` | 模型收到的 system/user、回复与工具调用路径 | reasoning 文本等于真实内部思维 | 待回答 |
-| API 收据 | `agent_api_records`、`user_api_records` | 有真实 provider 响应与 usage 记录 | 十任务结果可推广到所有任务和模型 | 待回答 |
+| 实验配置 | baseline 三个消融开关均关闭；对照仅 `remove_tool_descriptions=true` | 两个 arm 的目标配置差异 | 实际请求是否与标签一致 | 能区分配置标签与实际请求 |
+| 任务判分 | baseline `7/10`；no-tool-desc `9/10` | 这批历史任务的环境验收结果 | 删除描述普遍更好或差异一定由描述造成 | 能只陈述实测，不追加因果 |
+| 模型轨迹 | task 0 的 system prompt 相同，但首条 user 消息不同 | 用户模拟器为轨迹引入了随机变化 | task 0 的 `0→1` 由工具描述导致 | 能指出实际 user 输入是额外变化 |
+| API 请求 | `search_direct_flight` 名称相同；工具与 `origin` 参数描述在对照组为空 | 目标消融确实进入了模型请求 | 十任务结果可推广到所有任务和模型 | 能从真实 request 验证消融，不只信配置标签 |
 
 分别核对：目标消融是否真的作用到请求、Harness 执行了什么、工具结果与环境状态怎样、最终 reward 是什么。若两个 arm 的用户模拟消息并非逐字一致，把它记录为随机性与复测需求，不把它藏掉。
 
@@ -108,24 +109,24 @@ $p = 'runs\exp2-4-kimi-k3-20260730-v7\tool-calling-kimi-k3-baseline_0730121451.j
 - 输入 → 处理 → 输出：环境原始 wiki/tools + arm 配置 → 仅应用指定消融 → Agent 轨迹、环境 reward 与实验收据。
 - 与证据连接的关键行：`remove_tool_descriptions()` 是否只清空 `description`，以及 `ABLATION_SUITE` 是否保持其他开关一致。
 - 如果发现对照组表现反而更好：先查目标变量、任务覆盖、随机轨迹、错误收据和重复次数，不改写假设迎合结果。
-- 学员解释：待回答。
+- 学员解释：能从递归代码判断所有名为 `description` 的字段被清空，而 `name`、`type` 等字段保留；理解 `deepcopy` 防止共享 schema 被污染，否则可能出现“配置标为 baseline、实际描述已被清空”的失真收据。
 
 ## 6. 单变量对照
 
 - 唯一目标改变：读取 `no_tool_desc` arm；其配置应为 `remove_tool_descriptions=true`，另外两个消融开关仍与 baseline 相同。
 - 保持不变：campaign、模型、provider、十个 task id、protocol、temperature、seed、max steps 与统计口径。
-- 对照前预测：待回答。
+- 对照前预测：通过数低于 baseline 的 `7/10`。
 - 对照命令（与 baseline 只替换收据文件名）：
 
 ```powershell
 $p = 'runs\exp2-4-kimi-k3-20260730-v7\tool-calling-kimi-k3-no_tool_desc_0730121452.json'; $r = Get-Content -Raw $p | ConvertFrom-Json; $rewards = @($r.results | ForEach-Object { [double]$_.reward }); [pscustomobject]@{ Source = $p; Config = ($r.ablation_config | ConvertTo-Json -Compress); Tasks = $rewards.Count; Successes = @($rewards | Where-Object { $_ -eq 1 }).Count; Rewards = ($rewards -join ',') }
 ```
 
-- 真实轨迹与结果：待学员运行。
+- 真实轨迹与结果：对照收据配置为 `tone_style=default`、`randomize_wiki=false`、`remove_tool_descriptions=true`；reward 为 `1,1,1,1,1,1,1,1,1,0`，通过 `9/10`，与原预测相反。进一步检查 task 0 发现 system prompt 相同、目标工具名相同且描述确实被清空，但首条 user 消息不同。
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据配置、reward 与轨迹讨论 | 用更多 seeds/trials 与置信区间检验是否稳定 |
+| 同一历史 campaign 中 baseline `7/10`、no-tool-desc `9/10`；task 0 的 user 消息不相同 | 工具名/schema 可能已提供足够线索；任务覆盖或采样随机性也可能解释差异 | 固定模型、底层任务、环境初始状态和验收规则，做多轮配对 trials/seeds 并报告波动范围 |
 
 对照若不符合预测，保留原始预测并下钻 task 级证据；不能挑选符合课本方向的一次，也不能因为单轮结果反直觉就宣布工具描述无用。
 
@@ -145,24 +146,30 @@ $p = 'runs\exp2-4-kimi-k3-20260730-v7\tool-calling-kimi-k3-no_tool_desc_07301214
 
 卡住时换成“只保留 AIDL 方法名和类型、删除注释”的小例子复查。三项通过且实验、对照、源码讲解实际完成，才记 `✅`。
 
+**课堂验收**：
+
+1. 概念复述：最初只提出结合 LLM 返回内容判断；经“模型声称已取消但无工具调用、数据库仍 ACTIVE”换例后，能说明还需核对工具调用、执行结果和权威数据验收。
+2. 结果预测：能定位变化可能先出现在工具选择与 `tool_calls`；经提示后补全参数、调用顺序、任务覆盖与采样随机性的影响。
+3. 故障定位：先提出检查工具定义、参数、system prompt 与不能下普遍结论；经“参数写反但工具成功”及配对重复实验补讲后，能沿 Harness 执行、工具结果、最终状态定位，并理解不能强制固定下游工具结果。
+
 ## 8. 可选 AI 代码演示
 
 默认不安排编程作业。本实验已有完整框架与收据；若统计口径仍抽象，只用 PowerShell 对 reward 向量做计数，不新增文件、不改 vendor。
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展
-- 尚未理解及证据：待开展
-- 下次从哪一小步继续：待开展
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）
+- 已理解到哪：能把系统提示词/工具描述视为可执行规则，用真实请求确认消融生效，并区分配置层单变量、轨迹层随机性和权威环境 reward。
+- 尚未理解及证据：本课范围内无未通过项；曾只看 LLM 回复、只看“工具调用成功”，以及试图固定下游工具结果，均经换例复查纠正。
+- 下次从哪一小步继续：按路线进入 Day 13「提示注入攻防」。
+- 状态：✅
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：待学员运行；历史 campaign 路径为 `runs/exp2-4-kimi-k3-20260730-v7/`
-- 学员的原始预测与后续解释：待回答
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
+- 实际授课日期、用时、停在哪一步：2026-10-26；完成全部流程。
+- 实验命令、模型、证据位置与必要真实摘录：学员离线读取 `runs/exp2-4-kimi-k3-20260730-v7/` 中 Kimi K3 baseline 与 no-tool-desc 收据；baseline `7/10`，对照 `9/10`；无本次模型请求。
+- 学员的原始预测与后续解释：原预测删除描述后低于 `7/10`；实测相反后能保留预测，只陈述观察，并从 task 0 的不同 user 消息识别随机性混入。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过；均以新例复查。
 - 是否采用代码演示及原因：未安排
-- 本次观察、假设、待验证点：待开展
+- 本次观察、假设、待验证点：观察为该历史十任务 campaign 的 `7/10` 对 `9/10`；工具名/schema 足够、任务覆盖不足和采样随机性均为解释假设；是否存在稳定提升或下降须以更多配对 trials/seeds 验证。
 - 对应备课 skill：`vendor/ai-agent-book/skills/context-engineering/SKILL.md`
-- 进度处理：授课结束或中断后追加 Day 12 日志；仅备课和开场不追加上课日志。
+- 进度处理：2026-10-26 追加 Day 12 `✅`；下一课为 Day 13。
