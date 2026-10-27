@@ -68,6 +68,8 @@ $env:PYTHONIOENCODING = 'utf-8'
 
 **步骤 A 真实输出**：学员在 PowerShell 中确认 `Location=F:\AIStudy\vendor\ai-agent-book\chapter2\local_llm_serving`、`NO_PROXY=localhost,127.0.0.1,::1`、`PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`；环境准备通过，尚未调用模型。
 
+**步骤 B 真实输出**：`probe_ready chars=2917`；说明同一份内存探针已装入当前 PowerShell 会话，尚未调用模型。由于探针含中文，正式运行时另行固定 PowerShell 原生管道的 `$OutputEncoding` 为 UTF-8，避免输入在到达 Python 前被改写。
+
 ```powershell
 $probe = @'
 import json
@@ -168,6 +170,7 @@ print(json.dumps({
 - 输出/用途：`description_count` 先证明本次请求确实保留描述；`tool_calls` 用于判断模型选了谁、参数是什么；`executed=false` 防止把请求误当执行。
 
 ```powershell
+$OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 $env:D15_STRIP = '0'
 $probe | python -m uv run --extra ch2 python -
 ```
@@ -202,6 +205,7 @@ $probe | python -m uv run --extra ch2 python -
 - 对照前预测：待回答。
 
 ```powershell
+$OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 $env:D15_STRIP = '1'
 $probe | python -m uv run --extra ch2 python -
 ```
@@ -242,7 +246,7 @@ $probe | python -m uv run --extra ch2 python -
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：2026-10-27；已进入概念建立，等待首个确认问题。
-- 实验命令、模型、证据位置与必要真实摘录：计划使用 `qwen3:8b`；步骤 A 已由学员运行并确认目录、代理绕过与 UTF-8 环境变量，尚未运行目标实验。
+- 实验命令、模型、证据位置与必要真实摘录：计划使用 `qwen3:8b`；步骤 A 已由学员运行并确认目录、代理绕过与 UTF-8 环境变量；步骤 B 得到 `probe_ready chars=2917`，内存探针已就绪，尚未运行目标实验。
 - 学员的原始预测与后续解释：概念确认时准确把首个故障点定位到模型可见契约与选择层；最初把一次执行成功概括为“工具实现没有问题”，经校准后保留为本次调用层面的证据，不外推全部输入。基线预测选择 `search_text`，`query=runtime_guard`；最初把 `path_glob` 表述为目标文件路径，经校准为任务未给定文件时应使用 Python 文件范围模式。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
 - 是否采用代码演示及原因：采用内存探针，避免改 `vendor/` 源文件，并把模型选择与真实工具执行隔离。
