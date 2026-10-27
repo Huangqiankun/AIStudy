@@ -212,9 +212,11 @@ $probe | python -m uv run --extra ch2 python -
 
 产物 `lesson-d15-no-description.json`。收到输出后再用一条只读命令核对两份收据中除描述外是否还有非预期差异。
 
+**真实对照证据**：学员运行得到 `description_count=0`，证明描述消融生效；模型仍选择 `search_text`，`query` 仍为 `runtime_guard`，但 `path_glob` 从基线的 `**/*.py` 变为 `*.py`。两次均为 `content=""`、`executed=false`。讲师只读归一化两份收据后得到 `RequestEqualAfterRemovingDescriptions=True`，说明请求在删除描述后其余模型、消息、工具名、参数 schema、顺序与 options 相同；参数对象的键顺序不同不作为语义差异。
+
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 工具名与参数名本身也可能给模型线索；有无差异都不能由单次样本外推 | 可重复运行、换边界任务或换模型，检验描述在何种歧义下影响选择/填参 |
+| 工具选择和 `query` 未变；`path_glob` 从 `**/*.py` 变为 `*.py`；请求归一化后确认唯一输入变化是描述 | 工具名与参数名足以支持本次选对工具；描述中的具体例子可能影响了搜索范围写法 | 工具未执行，尚不能断言 `*.py` 在具体实现中必然漏掉子目录或任务失败；可核对实现契约、执行结果、重复运行或换边界任务 |
 
 ## 7. 理解检查：每次只问一题
 
@@ -246,7 +248,7 @@ $probe | python -m uv run --extra ch2 python -
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：2026-10-27；已进入概念建立，等待首个确认问题。
-- 实验命令、模型、证据位置与必要真实摘录：使用 `qwen3:8b`；步骤 A 已确认目录、代理绕过与 UTF-8 环境变量，步骤 B 得到 `probe_ready chars=2917`。步骤 C 基线收据为 `local_llm_serving/lesson-d15-described.json`：实际请求含 5 处描述，响应调用 `search_text(query="runtime_guard", path_glob="**/*.py")`，且 `executed=false`。
+- 实验命令、模型、证据位置与必要真实摘录：使用 `qwen3:8b`；步骤 A 已确认目录、代理绕过与 UTF-8 环境变量，步骤 B 得到 `probe_ready chars=2917`。步骤 C 基线收据为 `local_llm_serving/lesson-d15-described.json`：实际请求含 5 处描述，响应调用 `search_text(query="runtime_guard", path_glob="**/*.py")`，且 `executed=false`。对照收据 `lesson-d15-no-description.json` 的描述为 0，工具与 query 不变，`path_glob="*.py"`；归一化核对确认请求侧除描述外一致。
 - 学员的原始预测与后续解释：概念确认时准确把首个故障点定位到模型可见契约与选择层；最初把一次执行成功概括为“工具实现没有问题”，经校准后保留为本次调用层面的证据，不外推全部输入。基线预测选择 `search_text`，`query=runtime_guard`；最初把 `path_glob` 表述为目标文件路径，经校准为任务未给定文件时应使用 Python 文件范围模式。基线后能判断收据不能证明搜索或命中；经提示进一步区分 `content=""` 只是无普通文本，`executed=false` 才是未执行的直接证据。对照前预测删掉描述后可能错选或不调用；经校准后补充工具名、参数名和 schema 仍保留线索，不能预设必然失败。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
 - 是否采用代码演示及原因：采用内存探针，避免改 `vendor/` 源文件，并把模型选择与真实工具执行隔离。
