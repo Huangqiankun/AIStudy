@@ -196,7 +196,7 @@ $probe | python -m uv run --extra ch2 python -
 
 - 输入 → 处理 → 输出：注册的工具元数据 → schema 列表 → 模型首轮 `tool_calls`。
 - 关键边界：`get_tool_schemas()` 只建立模型可见契约；执行发生在后续 `_execute_tool_calls()`，两者不能互证。
-- 真实源码阅读：学员已亲自读取 `tools.py:111-123`，确认第 114 行遍历 `self.tools`，第 115–121 行把 `name`、`description`、`parameters` 放入 `type=function` 的列表元素，第 123 行返回 schema 列表。学员解释待回答。
+- 真实源码阅读：学员已亲自读取 `tools.py:111-123`，确认第 114 行遍历 `self.tools`，第 115–121 行把 `name`、`description`、`parameters` 放入 `type=function` 的列表元素，第 123 行返回 schema 列表。学员指出第 119–120 行直接取原工具的描述与参数，不会理解实现或自动补全含糊说明；讲师补充第 118 行的工具名也同样直接转发。
 
 ## 6. 单变量对照
 
