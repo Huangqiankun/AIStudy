@@ -54,6 +54,12 @@ Set-Location 'F:\AIStudy\vendor\ai-agent-book\chapter2\local_llm_serving'
 $env:NO_PROXY = 'localhost,127.0.0.1,::1'
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
+[pscustomobject]@{
+    Location = (Get-Location).Path
+    NO_PROXY = $env:NO_PROXY
+    PYTHONUTF8 = $env:PYTHONUTF8
+    PYTHONIOENCODING = $env:PYTHONIOENCODING
+}
 ```
 
 ### 步骤 B：在当前 PowerShell 会话准备同一个探针
