@@ -66,6 +66,8 @@ $env:PYTHONIOENCODING = 'utf-8'
 
 这一步只把探针文本放入 `$probe`，不调用模型。探针会构造两项工具定义；运行时由 `D15_STRIP` 决定是否递归移除 `description`，并把“实际请求 + 原始首轮响应”写入对应 JSON。
 
+**步骤 A 真实输出**：学员在 PowerShell 中确认 `Location=F:\AIStudy\vendor\ai-agent-book\chapter2\local_llm_serving`、`NO_PROXY=localhost,127.0.0.1,::1`、`PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`；环境准备通过，尚未调用模型。
+
 ```powershell
 $probe = @'
 import json
@@ -240,7 +242,7 @@ $probe | python -m uv run --extra ch2 python -
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：2026-10-27；已进入概念建立，等待首个确认问题。
-- 实验命令、模型、证据位置与必要真实摘录：计划使用 `qwen3:8b`；尚未运行目标实验。
+- 实验命令、模型、证据位置与必要真实摘录：计划使用 `qwen3:8b`；步骤 A 已由学员运行并确认目录、代理绕过与 UTF-8 环境变量，尚未运行目标实验。
 - 学员的原始预测与后续解释：概念确认时准确把首个故障点定位到模型可见契约与选择层；最初把一次执行成功概括为“工具实现没有问题”，经校准后保留为本次调用层面的证据，不外推全部输入。基线预测选择 `search_text`，`query=runtime_guard`；最初把 `path_glob` 表述为目标文件路径，经校准为任务未给定文件时应使用 Python 文件范围模式。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
 - 是否采用代码演示及原因：采用内存探针，避免改 `vendor/` 源文件，并把模型选择与真实工具执行隔离。
