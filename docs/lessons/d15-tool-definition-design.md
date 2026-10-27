@@ -175,14 +175,14 @@ $env:D15_STRIP = '0'
 $probe | python -m uv run --extra ch2 python -
 ```
 
-**真实证据**：待学员运行并贴回输出。产物 `lesson-d15-described.json`。
+**真实证据**：学员运行基线后得到 `variant=described`、`description_count=5`；模型返回 `search_text(query="runtime_guard", path_glob="**/*.py")`，`content` 为空，`executed=false`。收据 `lesson-d15-described.json` 复核到请求含 2 个函数级描述和 3 个参数级描述，模型、任务、工具名与参数均与摘要一致。该证据证明本轮实际请求携带完整定义且模型生成了预测调用，不证明工具已执行或正文中真实存在匹配。
 
 ## 4. 逐段读真实轨迹
 
 | 片段 | 真实摘录 / 证据字段 | 能证明什么 | 不能证明什么 | 学员解释 |
 |---|---|---|---|---|
 | 请求 | `request.tools`、`request.messages` | 模型本轮实际获得哪些契约信息 | 模型一定正确理解 | 待回答 |
-| 模型动作 | `response_message.tool_calls` | 模型选择的工具和生成的参数 | Harness 已执行、搜索有结果 | 待回答 |
+| 模型动作 | `response_message.tool_calls` | 基线选择 `search_text`，参数为 `runtime_guard` 与 `**/*.py` | Harness 已执行、搜索有结果 | 待回答 |
 | 执行层 | `executed=false` | 本探针刻意没有执行 | 任何真实文件命中或副作用 | 待回答 |
 | 最终答案 | 本探针无第二轮 | 不把文本正确性混进选择实验 | 完整 Agent 任务成功率 | 待回答 |
 
@@ -246,7 +246,7 @@ $probe | python -m uv run --extra ch2 python -
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：2026-10-27；已进入概念建立，等待首个确认问题。
-- 实验命令、模型、证据位置与必要真实摘录：计划使用 `qwen3:8b`；步骤 A 已由学员运行并确认目录、代理绕过与 UTF-8 环境变量；步骤 B 得到 `probe_ready chars=2917`，内存探针已就绪，尚未运行目标实验。
+- 实验命令、模型、证据位置与必要真实摘录：使用 `qwen3:8b`；步骤 A 已确认目录、代理绕过与 UTF-8 环境变量，步骤 B 得到 `probe_ready chars=2917`。步骤 C 基线收据为 `local_llm_serving/lesson-d15-described.json`：实际请求含 5 处描述，响应调用 `search_text(query="runtime_guard", path_glob="**/*.py")`，且 `executed=false`。
 - 学员的原始预测与后续解释：概念确认时准确把首个故障点定位到模型可见契约与选择层；最初把一次执行成功概括为“工具实现没有问题”，经校准后保留为本次调用层面的证据，不外推全部输入。基线预测选择 `search_text`，`query=runtime_guard`；最初把 `path_glob` 表述为目标文件路径，经校准为任务未给定文件时应使用 Python 文件范围模式。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
 - 是否采用代码演示及原因：采用内存探针，避免改 `vendor/` 源文件，并把模型选择与真实工具执行隔离。
