@@ -191,12 +191,12 @@ $probe | python -m uv run --extra ch2 python -
 **源码锚点**（当前版本已核实）：
 
 - `vendor/ai-agent-book/chapter2/local_llm_serving/tools.py:111-123`：把注册表中的 name、description、parameters 组装为 OpenAI/Ollama 兼容 schema。
-- `vendor/ai-agent-book/chapter2/local_llm_serving/ollama_native.py:119-128`：把 `messages` 与转换后的 `tools` 一起送入模型请求。
+- `vendor/ai-agent-book/chapter2/local_llm_serving/ollama_native.py:125-140`：先把用户消息追加到历史，再转换工具并把 `messages` 与 `tools` 一起送入模型请求。原备课锚点误写为 119–128；学员实读暴露偏移后已按当前源码修正。
 - `vendor/ai-agent-book/chapter2/prompt-engineering/ablation_utils.py:154-160`：深复制后递归移除描述；这正是对照变量的教材实现。
 
 - 输入 → 处理 → 输出：注册的工具元数据 → schema 列表 → 模型首轮 `tool_calls`。
 - 关键边界：`get_tool_schemas()` 只建立模型可见契约；执行发生在后续 `_execute_tool_calls()`，两者不能互证。
-- 真实源码阅读：学员已亲自读取 `tools.py:111-123`，确认第 114 行遍历 `self.tools`，第 115–121 行把 `name`、`description`、`parameters` 放入 `type=function` 的列表元素，第 123 行返回 schema 列表。学员指出第 119–120 行直接取原工具的描述与参数，不会理解实现或自动补全含糊说明；讲师补充第 118 行的工具名也同样直接转发。
+- 真实源码阅读：学员已亲自读取 `tools.py:111-123`，确认第 114 行遍历 `self.tools`，第 115–121 行把 `name`、`description`、`parameters` 放入 `type=function` 的列表元素，第 123 行返回 schema 列表。学员指出第 119–120 行直接取原工具的描述与参数，不会理解实现或自动补全含糊说明；讲师补充第 118 行的工具名也同样直接转发。随后按讲义旧锚点读取 `ollama_native.py:119-128`，实际只看到流式分支和第 125–128 行追加用户消息，未看到工具请求；据真实输出重新定位为第 125–140 行，不用预期内容覆盖当前源码。
 
 ## 6. 单变量对照
 
