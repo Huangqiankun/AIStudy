@@ -130,9 +130,11 @@ python -m uv run --extra ch2 python skills/pptx/scripts/generate_pptx.py `
 
 **对照真实输出（2026-10-28，学员 PowerShell 实跑）**：直接脚本返回 `path=output\\lesson-d16-direct.pptx`、`num_slides=9`，以及与基线相同的九个标题；输出中没有 `read_skill`、`read_skill_file` 或 `run_skill_script` 分发日志。当前 JSON 是生成器执行后的内部摘要，尚需独立重新打开两个磁盘文件完成同口径校验。
 
+**独立产物校验**：学员用 `python-pptx` 在生成器之外重新打开两份磁盘文件，得到 `lesson-d16-skill.pptx: exists=True slides=9`、`lesson-d16-direct.pptx: exists=True slides=9`、`titles_equal=True`。因此两条路径的最终产物在“可打开、页数、标题”三个观察维度上一致；差异落在是否存在 Skill 渐进加载与分发轨迹，不能由最终文件反推该轨迹。
+
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 直接脚本也返回 9 页与同一标题清单，三类 Skill 通道日志消失 | PPTX 生成能力来自确定性脚本；Skill 通道提供按需指令/资源加载与编排证据，不是文件格式生成的唯一途径 | 独立回读两个产物；若要证明模型自主选 Skill，还需捕获在线请求、激活调用、返回与后续上下文 |
+| 两份文件独立回读均存在、均为 9 页且标题相同；直接路径的三类 Skill 通道日志消失 | PPTX 生成能力来自确定性脚本；Skill 通道提供按需指令/资源加载与编排证据，不是文件格式生成的唯一途径 | 若要证明模型自主选 Skill，还需捕获在线请求、激活调用、返回与后续上下文 |
 
 对照的目的不是证明“Skill 才能生成 PPTX”，而是拆开“领域指令加载”和“脚本执行/产物生成”两条证据链。
 
