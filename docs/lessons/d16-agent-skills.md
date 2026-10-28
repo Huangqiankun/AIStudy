@@ -91,8 +91,8 @@ python -m uv run --extra ch2 python demo.py --offline --output output/lesson-d16
 
 | 片段 | 真实摘录 / 证据字段 | 能证明什么 | 不能证明什么 | 学员解释 |
 |---|---|---|---|---|
-| 薄目录 | `约 506 字符`，列出 `pptx` 的 name/description | 启动可发现的元数据 | 完整正文已加载 | 待回答 |
-| 第二/三层 | `read_skill('pptx')` 242 字符；`read_skill_file(..., 'reference.md')` 163 字符 | 对应文件经过加载通道 | 模型自主决定读取 | 待回答 |
+| 薄目录 | `约 506 字符`，列出 `pptx` 的 name/description | 启动可发现的元数据 | 完整正文已加载 | 学员指出这里只表示读取了 Skill 清单列表 |
+| 第二/三层 | `read_skill('pptx')` 242 字符；`read_skill_file(..., 'reference.md')` 163 字符 | 对应文件经过加载通道 | 模型自主决定读取 | 学员正确定位 `read_skill('pptx')` 为完整 `SKILL.md` 被读取的第一条直接证据 |
 | 脚本执行 | `run_skill_script(..., 'generate_pptx.py')`；返回路径与 `num_slides=9` | 生成器被调用及返回 | 指令一定被模型理解 | 待回答 |
 | PPTX 回读 | 同一路径被重新打开，读回 9 页 | 产物可被库重新打开 | Skill 被模型选择或加载 | 待回答 |
 
