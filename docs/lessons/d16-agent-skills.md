@@ -119,7 +119,8 @@ python -m uv run --extra ch2 python demo.py --offline --output output/lesson-d16
 
 - 唯一改变的条件：绕过 Skill 加载通道，直接运行同一捆绑生成脚本。
 - 保持不变：输入大纲、生成脚本、Python 环境；输出路径不同只为保留两份证据。
-- 对照前预测：待回答
+- 学员对照前预测：直接执行脚本时，`read_skill → read_skill_file → run_skill_script` 三类通道证据会消失；Skill 负责先暴露薄能力目录，命中后加载操作手册和资源，生成脚本负责执行。
+- 讲师校准：三类通道日志的预测成立；但生成脚本不理解或执行操作手册，它只接收已整理的大纲并确定性地产出 PPTX。Skill/Agent 流程负责何时加载、怎样组织输入、选用哪个资源及如何验收，脚本负责具体转换。
 - 对照命令（收到基线输出后再给）：
 
 ```powershell
