@@ -66,6 +66,8 @@ $env:PYTHONIOENCODING = 'utf-8'
 
 ### 步骤 B：核对 CLI（收到步骤 A 的输出后再给）
 
+**步骤 A 真实输出**：`Location=F:\AIStudy\vendor\ai-agent-book\chapter2\agent-skills-ppt`，`InputExists=True`，`SkillExists=True`。这只确认目录、固定输入和 Skill 入口存在；尚未加载 Skill、执行脚本或生成产物。
+
 ```powershell
 python -m uv run --extra ch2 python demo.py --help
 ```
