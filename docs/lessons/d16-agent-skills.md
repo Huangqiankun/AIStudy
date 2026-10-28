@@ -113,7 +113,7 @@ python -m uv run --extra ch2 python demo.py --offline --output output/lesson-d16
 - 输入 → 处理 → 输出：`skills/*/SKILL.md` → 提取元数据形成目录 → 命中后读取正文/子文件 → 分发执行脚本 → 返回并校验产物。
 - 连接轨迹的关键点：`scan_skill_catalog()` 只保留 `name/description`；`tool_read_skill()` 才读取全文；`dispatch()` 把工具名和参数路由到具体动作。
 - 若启动时直接读取所有 `SKILL.md` 正文：能力仍可用，但“只让薄目录常驻”的边界消失，上下文成本与注意力干扰会变化。
-- 学员解释：待回答
+- 学员解释：虽然 `scan_skill_catalog()` 在本地读取整个 `SKILL.md`，但后续只从 `meta` 取 `name`、`description` 组装目录，因此仍可说启动时暴露给模型的只是薄目录。讲师补充边界：本地文件读取、Harness 保存/筛选和模型实际收到的上下文是三层事实；`build_system_prompt()` 最终只渲染名称与描述，才是本同构实现中“模型可见薄目录”的直接源码依据。
 
 ## 6. 单变量对照
 
