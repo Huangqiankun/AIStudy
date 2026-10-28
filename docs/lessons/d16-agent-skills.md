@@ -72,6 +72,8 @@ $env:PYTHONIOENCODING = 'utf-8'
 python -m uv run --extra ch2 python demo.py --help
 ```
 
+**步骤 B 真实输出**：CLI 显示 `--paper`、`--output/-o`、`--model`、`--max-turns` 与 `--offline`；其中 `--offline` 明确说明“不调用 OpenAI”，使用 `papers/sample_outline.json` 确定性地走完三层渐进式披露。由此确认后续命令与当前源码参数一致，也确认本基线不能产生模型自主路由证据。
+
 ### 步骤 C：运行 Skill 通道基线（完成预测后再给）
 
 这条命令读取薄目录和内置大纲，按固定顺序经过三层加载通道，执行捆绑生成器，再重新打开 PPTX 校验页数与标题；它不调用模型，因此能证明加载器与产物链路，不能证明模型自主路由。
