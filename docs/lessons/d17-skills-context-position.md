@@ -2,7 +2,7 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter2.md` § Skills 在上下文中的位置（第 814–832 行）
 > 实验 `vendor/ai-agent-book/chapter2/agent-skills-ppt/`（只读消息布局探针；不作为模型自主路由证据）
-> 备课日期 2026-11-02 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-11-02 ｜ 授课日期 2026-11-02 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。45 分钟为参考，可跨会话；没有实际运行和理解检查时，不填完成状态。
 
@@ -37,7 +37,7 @@
 - 固定条件：同一教材版本、同一 `scan_skill_catalog()`、`build_system_prompt()` 与 `dispatch()`；不调用在线模型，不生成 PPTX。
 - 观察点：首次请求有哪些角色和内容；`read_skill` 的调用与结果 ID 是否配对；下一轮消息列表是否包含完整正文；加载前的消息前缀是否原样保留。
 - 预测问题：在不改写已有消息、只在调用点追加 `assistant + tool` 两条消息时，哪些字段应能直接证明“旧前缀没变、正文已经可供下一轮请求使用”？
-- 学员预测：待回答。
+- 学员预测：追加式加载后正文应位于 `tool` 或 `user` 消息；调用 ID 与正文位置可证明配对和承载位置。经追问后补充：要证明旧前缀未改写，还需逐项比较加载前消息与加载后相同长度的前缀。
 
 ## 3. 运行实验
 
@@ -84,7 +84,7 @@ import demo
 
 catalog = demo.scan_skill_catalog()
 system_prompt = demo.build_system_prompt(catalog)
-task = "把论文做成演示文稿"
+task = "make a presentation from a paper"
 messages = [
     {"role": "system", "content": system_prompt},
     {"role": "user", "content": task},
@@ -134,7 +134,7 @@ $probe | python -m uv run --extra ch2 python -
 
 **准备观察什么**：不要猜具体字符数；先核对角色序列和 ID，再分别判断“旧消息有没有变化”与“正文是否存在于下一轮将发送的消息列表”。`next_request_contains_skill=true` 也只证明 Harness 构造出的下一轮输入含正文，不能证明模型已经读懂或遵守了正文。
 
-**真实证据**：待学员运行并贴回输出。记录命令、退出状态和字段值；若日志先打印第二层加载提示，再出现 JSON，要把两者分别解释为本地分发日志与消息收据。
+**真实证据（2026-11-02，学员 PowerShell 实跑）**：环境检查得到 `DemoExists=True`、`SkillExists=True`；`--help` 显示当前入口支持 `--paper`、`--output`、`--model`、`--max-turns` 与 `--offline`。追加探针先打印 `read_skill('pptx')` 加载完整正文 `1242` 字符，随后 JSON 显示：`before_roles=[system,user]`、`after_roles=[system,user,assistant,tool]`、`catalog_chars=506`、`skill_chars=1242`，且 `paired_call_id`、`prefix_unchanged`、`next_request_contains_skill` 均为 `true`。这证明本地 Harness 的调用配对、前缀保持和待发送列表含正文；由于探针没有发起 API 请求，不证明服务端接收、缓存命中或模型使用正文。
 
 ## 4. 逐段读真实轨迹
 
@@ -142,10 +142,10 @@ $probe | python -m uv run --extra ch2 python -
 
 | 片段 | 真实摘录 / 证据字段 | 能直接证明什么 | 仍不能证明什么 | 学员解释 |
 |---|---|---|---|---|
-| 首次请求 | 待运行 | 薄目录与任务的角色、顺序和体积 | 模型已选择 Skill | 待回答 |
-| 加载请求 | 待运行 | 构造了 `assistant.read_skill` 调用 | 该调用来自真实模型自主决策 | 待回答 |
-| 加载结果 | 待运行 | ID 配对，正文以 `tool` 结果加入列表 | 模型已在后续回答中使用正文 | 待回答 |
-| 下一轮输入 | 待运行 | 原前缀是否逐项保持、正文是否在待发送列表 | 服务端实际接收、模型遵守、任务完成 | 待回答 |
+| 首次请求 | `before_roles=[system,user]`，薄目录 506 字符 | 薄目录与任务的角色、顺序和体积 | 模型已选择 Skill | 学员确认首次只获得可发现目录与加载规则，不含完整流程 |
+| 加载请求 | 人工构造 `assistant.read_skill`，ID 为 `call_d17` | Harness 探针构造了加载请求 | 该调用来自真实模型自主决策 | 学员能区分本地构造与模型调用 |
+| 加载结果 | `skill_chars=1242`、`paired_call_id=true`，角色为 `tool` | ID 配对，正文以工具结果加入列表 | 模型已在后续回答中使用正文 | 学员指出正文读取与 ID 配对是不同层事实 |
+| 下一轮输入 | `prefix_unchanged=true`、`next_request_contains_skill=true` | 原前缀逐项保持，正文位于待发送列表 | 服务端实际接收、模型遵守、任务完成 | 学员明确后者只证明 Harness 列表含正文，不能证明 LLM 收到 |
 
 本探针的 `assistant` 调用由测试代码明确构造，必须标为 Harness 布局探针。若要建立真实模型证据链，还需另查模型实际请求、模型输出的调用、Harness 执行、工具结果、下一次真实 API 请求和最终任务状态。
 
@@ -162,7 +162,7 @@ $probe | python -m uv run --extra ch2 python -
 - 输入 → 处理 → 输出：磁盘 `SKILL.md` → Harness 先筛出薄目录 → 命中后读取全文 → 作为工具结果追加到 `messages`。
 - 连接轨迹的关键行：`messages.append(msg...)` 保存调用，随后 `messages.append({role: tool, ...})` 保存结果；下一轮 `chat_with_tools(..., messages, ...)` 才会把累积列表再次发给模型。
 - 实现边界：教材 demo 使用 `tool` 角色承载正文；Claude Code/Codex 等运行时可用 `user` 片段注入。Skill 规范约束“目录先可发现、正文选中后加载”，不统一规定 API 角色。
-- 学员解释：待回答。
+- 学员解释：能从 `catalog[name]` 只保存 `description` 与 `dir` 判断正文未进入薄目录；能指出 `return content` 只证明本地读取，还需追加工具消息并用增长后的 `messages` 发起下一次请求；若正文内容存在但调用 ID 错配，应定位到 Harness 的协议组装/结果配对层，而非文件读取层。
 
 ## 6. 单变量对照：追加正文 vs 改写开头
 
@@ -180,7 +180,7 @@ import demo
 
 catalog = demo.scan_skill_catalog()
 thin = demo.build_system_prompt(catalog)
-task = "把论文做成演示文稿"
+task = "make a presentation from a paper"
 initial = [
     {"role": "system", "content": thin},
     {"role": "user", "content": task},
@@ -202,7 +202,7 @@ progressive.extend([
 eager_rewrite = [dict(message) for message in initial]
 eager_rewrite[0] = {
     "role": "system",
-    "content": thin + "\n\n== 完整 Skill ==\n" + body,
+    "content": thin + "\n\n== FULL SKILL ==\n" + body,
 }
 
 receipt = {
@@ -224,11 +224,11 @@ print(json.dumps(receipt, ensure_ascii=False, indent=2))
 $comparison | python -m uv run --extra ch2 python -
 ```
 
-**真实轨迹与结果**：待运行。
+**真实轨迹与结果（2026-11-02，学员 PowerShell 实跑）**：`same_task=true`、`same_skill_body=true`，确认只改变注入策略；追加版角色为 `[system,user,assistant,tool]` 且 `progressive_preserves_initial_prefix=true`；改写版角色为 `[system,user]` 且 `eager_preserves_initial_prefix=false`；薄目录启动文本为 506 字符，正文写入 system 后为 1767 字符。字符量不等于 token 或账单；本地前缀相同也不直接证明服务端缓存命中。
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 追加策略不需要改写已建立的消息前缀；改写开头会改变此前请求的前缀字节 | 服务端实际 KV Cache 命中率与成本仍需 provider usage/cache 指标或服务端遥测验证，布尔比较本身不能证明真实命中 |
+| 同任务、同正文下，追加版保持初始前缀，system 改写版不保持；启动字符量 506→1767 | 追加策略不需要改写已建立的消息前缀；改写开头会改变此前请求的前缀字节 | 服务端实际 KV Cache 命中率与成本仍需 provider usage/cache 指标或服务端遥测验证，布尔比较本身不能证明真实命中 |
 
 若对照符合预测，只能得出结构层结论：追加版保持了本地消息前缀。不要把它扩大成“零成本”或“服务端一定命中”；正文首次加入仍要计算，具体缓存策略也由 provider 决定。
 
@@ -248,24 +248,30 @@ $comparison | python -m uv run --extra ch2 python -
 
 卡住时记录具体缺口，换一个文档/表格 Skill 的小例子复查。三项通过且实验、对照、源码讲解实际完成，才记 `✅`。
 
+**本次检查结果**：
+
+1. 概念复述：首次把“模型请求加载”说成规范固定路径；经 `/pptx` 客户端显式激活换例后，能说明规范只约束目录先可发现、正文选中后加载，消息角色与激活方式由 Harness 决定。通过。
+2. 结果预测：首次认为全量正文会破坏后续前缀复用；经“首次请求前已全量写入且以后不变”换例后，能区分启动成本增加与中途改写前缀，并保留服务端实际命中需遥测的边界。通过。
+3. 故障定位：先提出检查正文是否追加进轨迹；经缩小题后，能依据“本地 messages 有正文、真实 API 请求无正文”把首错定位到 Harness 请求构造/发送层，而非 Skill 文件或模型。通过。
+
 ## 8. 可选 AI 代码演示
 
 默认不布置编程作业。本课 PowerShell here-string 内的 Python 仅调用教材现有函数并打印收据，不修改 `vendor/`，也不要求学员学习完整 Python 语法。
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展
-- 尚未理解及证据：待开展
-- 下次从哪一小步继续：待开展
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）
+- 已理解到哪：能区分规范时序与 Harness 角色/激活实现；能沿本地读取、消息追加、真实请求、模型输出和权威状态分层定位；能解释追加式加载的前缀优势及证据边界。
+- 尚未理解及证据：无遗留理解缺口；本课探针未连接真实 provider，因此没有服务端接收或 KV Cache 命中遥测，不能把结构结论扩大为真实命中率结论。
+- 下次从哪一小步继续：Day 18「Agent 状态栏」，观察动态状态为何放在上下文末尾，以及它与 Skill 正文同为追加信息但职责不同。
+- 状态：✅
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：无模型；待学员运行消息布局探针并贴回收据
-- 学员的原始预测与后续解释：待回答
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
+- 实际授课日期、用时、停在哪一步：2026-11-02；完成全课。
+- 实验命令、模型、证据位置与必要真实摘录：无模型；学员运行两段 PowerShell here-string 只读探针。基线收据为 `system,user → system,user,assistant,tool`，三个布尔字段均为 true；对照收据显示追加版保持前缀、system 改写版不保持。
+- 学员的原始预测与后续解释：起初用调用 ID 与正文位置解释所有证据；随后能分别说明 ID 配对、正文承载位置、前缀逐项相等及待发送列表含正文各自证明什么，并主动保留“尚未真实发送”的边界。
+- 三项理解检查：概念 通过（换例复查） / 预测 通过（换例复查） / 定位 通过（缩小题复查）
 - 是否采用代码演示及原因：采用只读消息收据探针；目的是把“磁盘读取、Harness 消息、下一轮请求、模型行为”拆成可核对阶段
-- 本次观察、假设、待验证点：待开展
+- 本次观察、假设、待验证点：观察到教材 Harness 的追加版保留本地前缀，改写版改变 system；假设追加式布局更利于 KV Cache 复用；真实缓存命中、token 与成本仍待 provider 遥测验证。
 - 对应备课 skill：`vendor/ai-agent-book/skills/context-engineering/SKILL.md`
-- 进度处理：授课结束或中断后追加 Day 17 日志；仅备课不追加上课日志。
+- 进度处理：已在 `docs/progress.md` 追加 Day 17 `✅` 日志。
