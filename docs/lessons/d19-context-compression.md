@@ -1,7 +1,7 @@
 # Day 19 — 上下文压缩：如何做减法而不丢掉任务证据
 
-> 教材 `vendor/ai-agent-book/book/chapter2.md` § 上下文压缩策略  
-> 实验 `vendor/ai-agent-book/chapter2/context-compression/`（实验 2-10）  
+> 教材 `vendor/ai-agent-book/book/chapter2.md` § 上下文压缩策略
+> 实验 `vendor/ai-agent-book/chapter2/context-compression/`（实验 2-10）
 > 备课日期 2026-11-03 ｜ 授课日期 2026-11-03 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。45 分钟为参考，可跨会话；没有实际运行、源码剖析、单变量对照和三项理解检查时，不填完成状态。
