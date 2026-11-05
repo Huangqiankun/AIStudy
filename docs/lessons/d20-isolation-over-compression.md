@@ -38,7 +38,7 @@
 
 ## 2. 实验前预测
 
-- 任务与输入：同一个源码定位任务、同一份由 `rg` 生成的源码证据。
+- 任务与输入：同一个源码定位任务、同一份由 PowerShell `Select-String` 生成的源码证据。
 - 固定条件：本地 Ollama、`qwen3:8b`、`temperature=0`、`seed=20261105`、相同主 Agent system message。
 - 唯一架构变化：主 Agent 的 user message 携带原始搜索证据，或只携带子 Agent 结论。
 - 观察点：三次本地请求各自的 `messages`、请求字符数、`prompt_eval_count`、响应正文；不能只看最终答案。
@@ -75,7 +75,7 @@ ollama list
 
 **处理/筛选**：
 
-1. `rg` 用固定关键词和上下文行生成同一份源码证据。
+1. PowerShell `Select-String` 用固定关键词定位源码，再读取每个命中点前后各两行，生成同一份带文件名和行号的证据。
 2. 直接路径把原始证据放进主 Agent 请求。
 3. 隔离路径先把原始证据放进独立的子 Agent 请求，再只把其结论放进主 Agent 请求。
 4. 三次请求都保存本地构造的消息、Ollama 返回的提示 token 计数和回答，并比较两个主请求的字符数。
@@ -93,7 +93,20 @@ $task = @'
 '@
 
 $pattern = 'ContextCompressor|compress_search_results|_context_aware_summary|compressed_result|tool_content|messages=messages'
-$evidence = (& rg -n -C 2 $pattern agent.py compression_strategies.py | Out-String).Trim()
+$evidenceLines = foreach ($match in (
+    Select-String -Path 'agent.py','compression_strategies.py' -Pattern $pattern
+)) {
+    $fileName = Split-Path $match.Path -Leaf
+    $sourceLines = Get-Content -Encoding utf8 $match.Path
+    $startLine = [Math]::Max(1, $match.LineNumber - 2)
+    $endLine = [Math]::Min($sourceLines.Count, $match.LineNumber + 2)
+
+    for ($lineNumber = $startLine; $lineNumber -le $endLine; $lineNumber++) {
+        '{0}:{1}:{2}' -f $fileName, $lineNumber, $sourceLines[$lineNumber - 1]
+    }
+    '--'
+}
+$evidence = ($evidenceLines -join "`n").Trim()
 
 function Invoke-LocalAgent {
     param(
@@ -219,7 +232,7 @@ $needle = '_context_aware_summary'
 
 | 片段 | 真实摘录 / 证据字段 | 模型看见什么或决定什么 | Harness 做了什么 | 学员解释 |
 |---|---|---|---|---|
-| 直接主请求 | 待运行 | 待观察 | 把原始 `rg` 证据装入主请求 | 待回答 |
+| 直接主请求 | 待运行 | 待观察 | 把原始源码筛选证据装入主请求 | 待回答 |
 | 子 Agent 请求 | 待运行 | 待观察 | 独立请求读取相同原始证据 | 待回答 |
 | 隔离主请求 | 待运行 | 待观察 | 只装入子 Agent 返回内容 | 待回答 |
 | 两个最终回答 | 待运行 | 待观察 | 保存响应，不以答对反推请求边界 | 待回答 |
