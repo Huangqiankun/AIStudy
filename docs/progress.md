@@ -41,6 +41,7 @@
 | 17 | 2026-11-02 | [Skills 在上下文中的位置](lessons/d17-skills-context-position.md) | ✅ | 曾把调用 ID/正文位置当作前缀证据、把全量稳定正文误判为必然破坏复用；经追加探针、system 改写对照、源码链与三项复查后通过 |
 | 18 | 2026-11-03 | [Agent 状态栏](lessons/d18-agent-state-bar.md) | ✅ | 曾把状态栏误判为精简输入、把注意力当因果；经冻结 A/B 收据、seed 配对文本、源码链与执行分层换例后通过 |
 | 19 | 2026-11-03 | [上下文压缩](lessons/d19-context-compression.md) | ✅ | 曾假定原文必长于摘要；经本地压缩反例、Token 漏记、源码链与截断/摘要/请求分层复查后通过 |
+| 20 | 2026-11-05 | [隔离优于压缩](lessons/d20-isolation-over-compression.md) | ✅ | 曾把独立请求历史误解为 Result 内容不会进入主上下文；经请求标记探针、源码核验、完整/含糊任务对照和换例复查后通过 |
 
 ---
 
