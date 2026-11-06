@@ -42,6 +42,7 @@
 | 18 | 2026-11-03 | [Agent 状态栏](lessons/d18-agent-state-bar.md) | ✅ | 曾把状态栏误判为精简输入、把注意力当因果；经冻结 A/B 收据、seed 配对文本、源码链与执行分层换例后通过 |
 | 19 | 2026-11-03 | [上下文压缩](lessons/d19-context-compression.md) | ✅ | 曾假定原文必长于摘要；经本地压缩反例、Token 漏记、源码链与截断/摘要/请求分层复查后通过 |
 | 20 | 2026-11-05 | [隔离优于压缩](lessons/d20-isolation-over-compression.md) | ✅ | 曾把独立请求历史误解为 Result 内容不会进入主上下文；经请求标记探针、源码核验、完整/含糊任务对照和换例复查后通过 |
+| 21 | 2026-11-06 | [W3 上下文布局与边界复盘（buffer）](lessons/d21-week3-buffer-review.md) | ✅ | 曾把主请求标记误解为只能证明子 Agent 看过；经冻结收据、源码核验、完整/含糊 Result 对照及三层换例复查后通过 |
 
 ---
 
