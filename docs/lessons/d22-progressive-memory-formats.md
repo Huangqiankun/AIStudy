@@ -182,7 +182,7 @@ Advanced JSON Cards 对照片段：`manager_class=AdvancedJSONMemoryManager`、`
 - 输入 → 处理 → 输出：模式和内容结构 → 工厂分派及模式专属写入 → JSON 文件与上下文字符串。
 - 轨迹连接点：探针输出的 `manager_class` 对应工厂返回值，`memory_file` 对应各实现的 `save_memory()`。
 - 改变行为后的预测：若只改模式，最先变化应是管理器类型和持久化形状；是否更会回答问题还需要检索与模型请求证据。
-- 学员解释：待回答
+- 学员解释：已从 `create_memory_manager()` 说明 Enhanced Notes 命中与 Notes 相同的分支并返回 `NotesMemoryManager`；已把 JSON Cards 的父亲医生输入映射为 `health / father / cardiologist / 张医生`，理解前三项构成路径、`value/source/updated_at` 构成叶子数据；已指出 `source=session_id` 只是调用方标签，不能证明事实由用户说出；已从 `if 'backstory' not in card` 判断本次 backstory 来自探针输入而非管理器推理。
 
 ## 6. 单变量对照
 
@@ -226,7 +226,7 @@ Advanced JSON Cards 对照片段：`manager_class=AdvancedJSONMemoryManager`、`
 - 实际授课日期、用时、停在哪一步：待开展
 - 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行中文成为 `?`，判为无效内容基线；显式设置 UTF-8 `$OutputEncoding` 后复跑成功。四种模式的有效证据均在 `data/lesson-d22/*_memory.json`。Notes / Enhanced Notes 共用 `NotesMemoryManager`；JSON Cards 使用层次路径；Advanced Cards 显式保存人物/关系/背景并自动补充元数据。均未调用模型。
 - 学员的原始预测与后续解释：运行前预测 `JSON Cards` 和 `Advanced JSON Cards` 最容易区分；关键字段为名字、科室、服务对象。已解释随机 note ID 只能区分记录、不能承担语义消歧；能用 `manager_class` 判断 Enhanced Notes 仍复用 Notes 实现；能按 `health.father.cardiologist → 李医生` 做最小局部更新；能指出未请求 LLM，因此不能由保存结果证明自动关系抽取。
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
+- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查；源码数据流已解释通过。
 - 是否采用代码演示及原因：采用无需模型的存储层探针，隔离表示差异与模型抽取随机性
 - 本次观察、假设、待验证点：首次问号问题经显式 UTF-8 管道复跑消失，支持管道编码解释。有效 Notes 基线只证明内容被保存并可格式化为上下文；是否能稳定消歧仍待与结构化模式对照，是否被模型正确使用不在本探针证明范围内。
 - 对应备课 skill：`vendor/ai-agent-book/skills/memory-system/SKILL.md`
