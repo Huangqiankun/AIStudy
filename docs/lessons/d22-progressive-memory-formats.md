@@ -141,13 +141,17 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 
 **准备观察什么**：不预设哪种格式“总是最好”。先核对条件确实生效，再看保存结构能否回答当前消歧任务，以及多出来的字段和维护成本是否与任务相称。
 
-**真实证据**：待学员运行并贴回输出。记录模式、退出状态和产物位置；输出是存储层证据，不证明模型以后一定检索到、读到或正确使用这些内容。
+**真实证据**：
+
+- 2026-11-08 第一次 `notes` 尝试：退出成功，`manager_class=NotesMemoryManager`，产物为 `data/lesson-d22/lesson_d22_notes_memory.json`；但两条 `content` 和 `context_preview` 中的中文均已变成 `?`。
+- 证据判断：该次运行只能证明管理器选择和文件写入发生，不能用于比较记忆内容。当前解释假设是 PowerShell here-string 经原生管道传给 Python 时发生编码损坏；须显式设置 `$OutputEncoding` 后复跑验证。
+- 输出仍只属于存储层证据，不证明模型以后一定检索到、读到或正确使用这些内容。
 
 ## 4. 逐段读真实轨迹
 
 | 片段 | 真实摘录 / 证据字段 | 程序输入什么 | 程序执行什么 | 学员解释 |
 |---|---|---|---|---|
-| 工厂选择 | 待运行 | `MemoryMode` | 选择管理器 | 待回答 |
+| 工厂选择 | 首次 `notes` 得到 `NotesMemoryManager` | `MemoryMode.NOTES` | 选择 Notes 管理器 | 待回答 |
 | 写入 | 待运行 | 同一语义事实的模式适配结构 | `add_memory()` | 待回答 |
 | 持久化 | 待运行 | 管理器内存状态 | 写入 JSON | 待回答 |
 | 上下文呈现 | 待运行 | 已保存记忆 | `get_context_string()` | 待回答 |
@@ -210,11 +214,11 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：待运行
+- 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行已写入 `data/lesson-d22/lesson_d22_notes_memory.json`，但中文内容全部成为 `?`，判为编码损坏的无效内容基线；待设置 `$OutputEncoding` 后复跑。
 - 学员的原始预测与后续解释：运行前预测 `JSON Cards` 和 `Advanced JSON Cards` 最容易区分；关键字段为名字、科室、服务对象。后续解释待回答。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
 - 是否采用代码演示及原因：采用无需模型的存储层探针，隔离表示差异与模型抽取随机性
-- 本次观察、假设、待验证点：待开展
+- 本次观察、假设、待验证点：观察到管理器与文件正确、中文内容已持久化为问号；假设是 PowerShell 原生管道编码损坏；待用显式 UTF-8 `$OutputEncoding` 复跑验证。
 - 对应备课 skill：`vendor/ai-agent-book/skills/memory-system/SKILL.md`
 - 环境备注：`ch3` 首次同步因 Windows 缺少 MSVC 无法构建 `annoy==1.17.3`；`--no-sync` 可复用现有环境启动本课无需新增依赖的代码。后续若进入向量检索实验，再单独处理编译依赖，不把它混入 Day 22。
 - 进度处理：授课结束或中断后追加 Day 22 日志；仅备课不追加上课日志。
