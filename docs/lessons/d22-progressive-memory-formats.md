@@ -145,6 +145,7 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 
 - 2026-11-08 第一次 `notes` 尝试：退出成功，`manager_class=NotesMemoryManager`，产物为 `data/lesson-d22/lesson_d22_notes_memory.json`；但两条 `content` 和 `context_preview` 中的中文均已变成 `?`。
 - 证据判断：该次运行只能证明管理器选择和文件写入发生，不能用于比较记忆内容。当前解释假设是 PowerShell here-string 经原生管道传给 Python 时发生编码损坏；须显式设置 `$OutputEncoding` 后复跑验证。
+- 2026-11-08 显式设置 `$OutputEncoding = [System.Text.UTF8Encoding]::new($false)` 后复跑：两条中文在 `stored.notes[].content` 和 `context_preview` 中完整保留，支持“首次损坏发生在 PowerShell 原生管道编码环节”的解释。有效基线显示顶层为 `user_id/type/updated_at/notes`，两条事实各自带独立 ID、相同 `doctor` 标签和同一 session；服务对象与科室仍写在自然语言 `content` 内。
 - 输出仍只属于存储层证据，不证明模型以后一定检索到、读到或正确使用这些内容。
 
 ## 4. 逐段读真实轨迹
@@ -152,9 +153,9 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 | 片段 | 真实摘录 / 证据字段 | 程序输入什么 | 程序执行什么 | 学员解释 |
 |---|---|---|---|---|
 | 工厂选择 | 首次 `notes` 得到 `NotesMemoryManager` | `MemoryMode.NOTES` | 选择 Notes 管理器 | 待回答 |
-| 写入 | 待运行 | 同一语义事实的模式适配结构 | `add_memory()` | 待回答 |
-| 持久化 | 待运行 | 管理器内存状态 | 写入 JSON | 待回答 |
-| 上下文呈现 | 待运行 | 已保存记忆 | `get_context_string()` | 待回答 |
+| 写入 | Notes 生成两条独立 note | 两条自然语言事实 + 相同 `doctor` 标签 | `add_memory()` | 待回答 |
+| 持久化 | `stored.notes` 保留中文、ID、session、时间和标签 | 管理器内存状态 | 写入 JSON | 待回答 |
+| 上下文呈现 | 两条事实完整出现在 `context_preview` | 已保存记忆 | `get_context_string()` | 待回答 |
 
 分别核对“程序保存了什么”“以后是否检索到”“是否进入模型请求”“答案是否正确”。本探针只直接证明第一项。
 
@@ -214,11 +215,11 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行已写入 `data/lesson-d22/lesson_d22_notes_memory.json`，但中文内容全部成为 `?`，判为编码损坏的无效内容基线；待设置 `$OutputEncoding` 后复跑。
+- 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行中文成为 `?`，判为无效内容基线；显式设置 UTF-8 `$OutputEncoding` 后复跑成功。有效证据在 `data/lesson-d22/lesson_d22_notes_memory.json`：两条独立 Notes 完整保留中文，服务对象与科室位于自然语言 `content`，两条均只有通用 `doctor` 标签。未调用模型。
 - 学员的原始预测与后续解释：运行前预测 `JSON Cards` 和 `Advanced JSON Cards` 最容易区分；关键字段为名字、科室、服务对象。后续解释待回答。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
 - 是否采用代码演示及原因：采用无需模型的存储层探针，隔离表示差异与模型抽取随机性
-- 本次观察、假设、待验证点：观察到管理器与文件正确、中文内容已持久化为问号；假设是 PowerShell 原生管道编码损坏；待用显式 UTF-8 `$OutputEncoding` 复跑验证。
+- 本次观察、假设、待验证点：首次问号问题经显式 UTF-8 管道复跑消失，支持管道编码解释。有效 Notes 基线只证明内容被保存并可格式化为上下文；是否能稳定消歧仍待与结构化模式对照，是否被模型正确使用不在本探针证明范围内。
 - 对应备课 skill：`vendor/ai-agent-book/skills/memory-system/SKILL.md`
 - 环境备注：`ch3` 首次同步因 Windows 缺少 MSVC 无法构建 `annoy==1.17.3`；`--no-sync` 可复用现有环境启动本课无需新增依赖的代码。后续若进入向量检索实验，再单独处理编译依赖，不把它混入 Day 22。
 - 进度处理：授课结束或中断后追加 Day 22 日志；仅备课不追加上课日志。
