@@ -155,7 +155,7 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 
 | 片段 | 真实摘录 / 证据字段 | 程序输入什么 | 程序执行什么 | 学员解释 |
 |---|---|---|---|---|
-| 工厂选择 | 首次 `notes` 得到 `NotesMemoryManager` | `MemoryMode.NOTES` | 选择 Notes 管理器 | 待回答 |
+| 工厂选择 | 首次 `notes` 得到 `NotesMemoryManager`；Enhanced Notes 仍相同，JSON/Advanced 各自切换实现 | `MemoryMode` | 选择对应管理器 | 已能用 `manager_class` 区分请求模式与实际实现 |
 | 写入 | Notes 生成两条独立 note | 两条自然语言事实 + 相同 `doctor` 标签 | `add_memory()` | 待回答 |
 | 持久化 | `stored.notes` 保留中文、ID、session、时间和标签 | 管理器内存状态 | 写入 JSON | 待回答 |
 | 上下文呈现 | 两条事实完整出现在 `context_preview` | 已保存记忆 | `get_context_string()` | 待回答 |
@@ -225,7 +225,7 @@ Advanced JSON Cards 对照片段：`manager_class=AdvancedJSONMemoryManager`、`
 
 - 实际授课日期、用时、停在哪一步：待开展
 - 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行中文成为 `?`，判为无效内容基线；显式设置 UTF-8 `$OutputEncoding` 后复跑成功。四种模式的有效证据均在 `data/lesson-d22/*_memory.json`。Notes / Enhanced Notes 共用 `NotesMemoryManager`；JSON Cards 使用层次路径；Advanced Cards 显式保存人物/关系/背景并自动补充元数据。均未调用模型。
-- 学员的原始预测与后续解释：运行前预测 `JSON Cards` 和 `Advanced JSON Cards` 最容易区分；关键字段为名字、科室、服务对象。后续解释待回答。
+- 学员的原始预测与后续解释：运行前预测 `JSON Cards` 和 `Advanced JSON Cards` 最容易区分；关键字段为名字、科室、服务对象。已解释随机 note ID 只能区分记录、不能承担语义消歧；能用 `manager_class` 判断 Enhanced Notes 仍复用 Notes 实现；能按 `health.father.cardiologist → 李医生` 做最小局部更新；能指出未请求 LLM，因此不能由保存结果证明自动关系抽取。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
 - 是否采用代码演示及原因：采用无需模型的存储层探针，隔离表示差异与模型抽取随机性
 - 本次观察、假设、待验证点：首次问号问题经显式 UTF-8 管道复跑消失，支持管道编码解释。有效 Notes 基线只证明内容被保存并可格式化为上下文；是否能稳定消歧仍待与结构化模式对照，是否被模型正确使用不在本探针证明范围内。
