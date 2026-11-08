@@ -146,6 +146,7 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 - 2026-11-08 第一次 `notes` 尝试：退出成功，`manager_class=NotesMemoryManager`，产物为 `data/lesson-d22/lesson_d22_notes_memory.json`；但两条 `content` 和 `context_preview` 中的中文均已变成 `?`。
 - 证据判断：该次运行只能证明管理器选择和文件写入发生，不能用于比较记忆内容。当前解释假设是 PowerShell here-string 经原生管道传给 Python 时发生编码损坏；须显式设置 `$OutputEncoding` 后复跑验证。
 - 2026-11-08 显式设置 `$OutputEncoding = [System.Text.UTF8Encoding]::new($false)` 后复跑：两条中文在 `stored.notes[].content` 和 `context_preview` 中完整保留，支持“首次损坏发生在 PowerShell 原生管道编码环节”的解释。有效基线显示顶层为 `user_id/type/updated_at/notes`，两条事实各自带独立 ID、相同 `doctor` 标签和同一 session；服务对象与科室仍写在自然语言 `content` 内。
+- 2026-11-08 `enhanced_notes` 对照：`mode=enhanced_notes`，但实际仍为 `NotesMemoryManager`，持久化 `type=notes`，顶层结构与 Notes 相同；差异体现在单条 `content` 是包含两位医生关系的完整段落，并增加了 `relationship` 标签。本离线探针由固定输入构造该段落，因此只证明当前实现如何保存它，不证明后台模型能自动提取出同等质量的段落。
 - 输出仍只属于存储层证据，不证明模型以后一定检索到、读到或正确使用这些内容。
 
 ## 4. 逐段读真实轨迹
@@ -156,6 +157,8 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 | 写入 | Notes 生成两条独立 note | 两条自然语言事实 + 相同 `doctor` 标签 | `add_memory()` | 待回答 |
 | 持久化 | `stored.notes` 保留中文、ID、session、时间和标签 | 管理器内存状态 | 写入 JSON | 待回答 |
 | 上下文呈现 | 两条事实完整出现在 `context_preview` | 已保存记忆 | `get_context_string()` | 待回答 |
+
+Enhanced Notes 对照片段：`mode` 名称发生变化，但 `manager_class` 和文件 `type` 没变；语境丰富度来自写入的 `content`，不是新的持久化 Schema。
 
 分别核对“程序保存了什么”“以后是否检索到”“是否进入模型请求”“答案是否正确”。本探针只直接证明第一项。
 
@@ -181,7 +184,7 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 - 保持不变：语义场景、教材版本、用户事实、输出字段、无 LLM 调用。
 - 对照前预测：待回答
 - 对照命令：复用步骤 C，只把 `$mode` 依次改为另外三种值；每次运行后贴回输出再继续。
-- 真实轨迹与结果：待运行
+- 真实轨迹与结果：Notes 与 Enhanced Notes 已运行；后者仍复用 `NotesMemoryManager` 和相同文件结构，当前差异在内容粒度与标签。JSON Cards / Advanced JSON Cards 待运行。
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
@@ -215,7 +218,7 @@ $probe | python -m uv run --extra ch3 --no-sync python - $mode
 ## 10. 讲师备注
 
 - 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行中文成为 `?`，判为无效内容基线；显式设置 UTF-8 `$OutputEncoding` 后复跑成功。有效证据在 `data/lesson-d22/lesson_d22_notes_memory.json`：两条独立 Notes 完整保留中文，服务对象与科室位于自然语言 `content`，两条均只有通用 `doctor` 标签。未调用模型。
+- 实验命令、模型、证据位置与必要真实摘录：第一次 `notes` 运行中文成为 `?`，判为无效内容基线；显式设置 UTF-8 `$OutputEncoding` 后复跑成功。有效 Notes 证据在 `data/lesson-d22/lesson_d22_notes_memory.json`。Enhanced Notes 证据在 `data/lesson-d22/lesson_d22_enhanced_notes_memory.json`：仍为 `NotesMemoryManager` / `type=notes`，单条完整段落保留两位医生关系。均未调用模型。
 - 学员的原始预测与后续解释：运行前预测 `JSON Cards` 和 `Advanced JSON Cards` 最容易区分；关键字段为名字、科室、服务对象。后续解释待回答。
 - 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
 - 是否采用代码演示及原因：采用无需模型的存储层探针，隔离表示差异与模型抽取随机性
