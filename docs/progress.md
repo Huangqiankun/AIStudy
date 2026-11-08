@@ -43,6 +43,7 @@
 | 19 | 2026-11-03 | [上下文压缩](lessons/d19-context-compression.md) | ✅ | 曾假定原文必长于摘要；经本地压缩反例、Token 漏记、源码链与截断/摘要/请求分层复查后通过 |
 | 20 | 2026-11-05 | [隔离优于压缩](lessons/d20-isolation-over-compression.md) | ✅ | 曾把独立请求历史误解为 Result 内容不会进入主上下文；经请求标记探针、源码核验、完整/含糊任务对照和换例复查后通过 |
 | 21 | 2026-11-06 | [W3 上下文布局与边界复盘（buffer）](lessons/d21-week3-buffer-review.md) | ✅ | 曾把主请求标记误解为只能证明子 Agent 看过；经冻结收据、源码核验、完整/含糊 Result 对照及三层换例复查后通过 |
+| 22 | 2026-11-08 | [四种渐进式记忆格式](lessons/d22-progressive-memory-formats.md) | ✅ | 曾把随机 note ID 当语义标识、把完整句子塞入 JSON 最小值、把 session 标签当用户来源证明；经四模式离线对照、35 行源码、局部更新与请求注入换例复查后通过 |
 
 ---
 
