@@ -44,6 +44,7 @@
 | 20 | 2026-11-05 | [隔离优于压缩](lessons/d20-isolation-over-compression.md) | ✅ | 曾把独立请求历史误解为 Result 内容不会进入主上下文；经请求标记探针、源码核验、完整/含糊任务对照和换例复查后通过 |
 | 21 | 2026-11-06 | [W3 上下文布局与边界复盘（buffer）](lessons/d21-week3-buffer-review.md) | ✅ | 曾把主请求标记误解为只能证明子 Agent 看过；经冻结收据、源码核验、完整/含糊 Result 对照及三层换例复查后通过 |
 | 22 | 2026-11-08 | [四种渐进式记忆格式](lessons/d22-progressive-memory-formats.md) | ✅ | 曾把随机 note ID 当语义标识、把完整句子塞入 JSON 最小值、把 session 标签当用户来源证明；经四模式离线对照、35 行源码、局部更新与请求注入换例复查后通过 |
+| 23 | 2026-11-09 | [结构化索引](lessons/d23-structured-index.md) | ✅ | 曾混合扁平与关系检索、把 score 当固定属性，并误定位 RAPTOR 跨层截断；经 Graph/RAPTOR 离线对照、真实建树与查询源码、`top_k` 单变量实验及三项换例复查后通过 |
 
 ---
 
