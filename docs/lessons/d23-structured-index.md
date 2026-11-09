@@ -127,6 +127,30 @@ python -m uv run --with networkx==3.4.2 --python 3.12 --no-project python -c "fr
 
 这个对照只验证本地示意知识库中“召回数量”与“显式关系结构”的区别。若扁平结果中出现目标控制位，也不能直接声称扁平检索永远无法回答；需检查是文本本身已包含关系、模型后续拼接成功，还是索引显式提供了路径。
 
+## 6A. 追加实验：RAPTOR 式层次摘要
+
+学员指出原基线实际只比较了扁平检索与 GraphRAG，横幅中的“层次树 1 棵”不能作为 RAPTOR 已实验的证据。因此在同一 Day 内追加层次摘要对照。
+
+- 核心查询：`概述一下 x86 的 SIMD 指令集`。
+- 扁平侧：仍从 10 个独立描述中按相似度返回前 3 个。
+- 层次侧：返回教材预置的 `SIMD 指令集综述` 父节点摘要及其子节点标识。
+- 证据边界：这是确定性的“RAPTOR 式输出形态”演示；父摘要与子节点列表是教材手工预置的，不是本次用聚类和 LLM 动态构建，不能据此评价真实摘要质量。
+- 运行前预测：待回答。
+
+```powershell
+if (Test-Path '.\lesson-d23-raptor.txt') {
+    throw 'lesson-d23-raptor.txt 已存在，请先停下并告诉讲师。'
+}
+
+python -m uv run --with networkx==3.4.2 --python 3.12 --no-project python -c "from structured_vs_flat_demo import ENTITIES, FlatRetriever, demo_hierarchical; demo_hierarchical(FlatRetriever(ENTITIES), '概述一下 x86 的 SIMD 指令集', 3)" 2>&1 | Tee-Object -FilePath '.\lesson-d23-raptor.txt'
+```
+
+**离线演示源码锚点**：`structured_vs_flat_demo.py:74-80` 的预置 `TREE_SUMMARY`，以及 `structured_vs_flat_demo.py:223-233` 的 `demo_hierarchical()`。
+
+**真实 RAPTOR 建树源码锚点**：`raptor_indexer.py:100-123` 的嵌入聚类、`raptor_indexer.py:125-178` 的父节点摘要与父子连接、`raptor_indexer.py:180-220` 的叶节点创建和递归建层。课堂在实跑后分段阅读，严格区分“示意树输出”与“真实建树机制”。
+
+**真实证据与解释**：待学员运行。
+
 ## 7. 理解检查：每次只问一题
 
 1. **概念复述**：RAPTOR 树、GraphRAG 图与扁平块分别保存了什么额外信息？
