@@ -149,7 +149,7 @@ python -m uv run --with networkx==3.4.2 --python 3.12 --no-project python -c "fr
 
 **真实 RAPTOR 建树源码锚点**：`raptor_indexer.py:100-123` 的嵌入聚类、`raptor_indexer.py:125-178` 的父节点摘要与父子连接、`raptor_indexer.py:180-220` 的叶节点创建和递归建层。课堂在实跑后分段阅读，严格区分“示意树输出”与“真实建树机制”。
 
-**真实证据与解释**：待学员运行。
+**真实证据与解释**（2026-11-09，学员运行）：首次经 `2>&1 | Tee-Object` 捕获时中文乱码；保留为 `lesson-d23-raptor-mojibake.txt`（1144 bytes）。固定实验输入，改由 Python 内部捕获并按 UTF-8 写入后，生成 `lesson-d23-raptor.txt`（869 bytes），控制台与文件中文正常。扁平前三名为 `CR4.OSFXSR`、`CR0.EM`、`XMM`；层次侧打印预置父节点 `SIMD 指令集综述`，正文覆盖 MMX、SSE、AVX、XMM/YMM、CR0/CR4 与 CPUID。程序打印的 `✗` / `✓` 说明是固定文案，不作为独立裁判证据；需继续读源码确认摘要来源。
 
 ## 7. 理解检查：每次只问一题
 
