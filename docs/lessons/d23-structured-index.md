@@ -118,9 +118,12 @@ python -m uv run --with networkx==3.4.2 --python 3.12 --no-project python -c "fr
 python -m uv run --with networkx==3.4.2 --python 3.12 --no-project python -c "from structured_vs_flat_demo import run_demo; run_demo(top_k=10, custom_query='运行 ADDPS 指令前，操作系统必须把哪个控制寄存器位置 1？', output='lesson-d23-top10.json')"
 ```
 
+- 真实对照（2026-11-09，学员运行）：生成 `lesson-d23-top10.json`（1142 bytes）。`flat` 从 3 项增加到 10 项，前三名及分数未变，`ADDPS` 进入第 8 名；`graph_start` 仍为 `ADDPS`，5 条 `graph_paths` 与基线相同。
+- 学员解释：增加 `top_k` 不会改变扁平结果的结构；但本实验没有调用下游 LLM，不能证明模型收到全部片段后永远答不对。需另查片段正文是否实际进入模型请求及模型的最终回答。
+
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据证据讨论 | 可更换查询、检查预置三元组或构建真实索引复测 |
+| 扁平结果 3→10，仍无关系字段；图路径不变 | `top_k` 只截断扁平排序列表，图遍历不读取该参数 | 可接入下游 LLM，记录实际请求与回答；也可更换查询或构建真实索引复测 |
 
 这个对照只验证本地示意知识库中“召回数量”与“显式关系结构”的区别。若扁平结果中出现目标控制位，也不能直接声称扁平检索永远无法回答；需检查是文本本身已包含关系、模型后续拼接成功，还是索引显式提供了路径。
 
