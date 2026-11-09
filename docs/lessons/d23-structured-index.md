@@ -151,6 +151,8 @@ python -m uv run --with networkx==3.4.2 --python 3.12 --no-project python -c "fr
 
 **真实证据与解释**（2026-11-09，学员运行）：首次经 `2>&1 | Tee-Object` 捕获时中文乱码；保留为 `lesson-d23-raptor-mojibake.txt`（1144 bytes）。固定实验输入，改由 Python 内部捕获并按 UTF-8 写入后，生成 `lesson-d23-raptor.txt`（869 bytes），控制台与文件中文正常。扁平前三名为 `CR4.OSFXSR`、`CR0.EM`、`XMM`；层次侧打印预置父节点 `SIMD 指令集综述`，正文覆盖 MMX、SSE、AVX、XMM/YMM、CR0/CR4 与 CPUID。程序打印的 `✗` / `✓` 说明是固定文案，不作为独立裁判证据；需继续读源码确认摘要来源。
 
+**源码分析结果**：离线 `TREE_SUMMARY` 是预置常量，只能演示父摘要的输出形态。真实 `RaptorIndexer.build_index()` 会创建 level 0 叶子，并由 `build_tree_level()` 聚类、摘要、写入 `parent` / `children` 后递归建层；但 `search()` 没有读取父子边，而是把所有层级节点放进同一候选池计算余弦相似度。其“跨层多样性”分支在前 `top_k` 装满后才追加节点，最终 `results[:top_k]` 又将追加项截掉，因此当前返回值未实现注释声称的层级多样性。这是静态源码观察，因本机依赖与模型边界尚未用真实索引运行验证。
+
 ## 7. 理解检查：每次只问一题
 
 1. **概念复述**：RAPTOR 树、GraphRAG 图与扁平块分别保存了什么额外信息？
