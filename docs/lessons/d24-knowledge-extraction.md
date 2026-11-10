@@ -120,7 +120,7 @@ case = next(row for row in rows if row['id'] == case_id)
 factors = schema['core']
 contract = [{'key': f['key'], 'kind': f['kind'], 'values': f.get('values', [])} for f in factors]
 messages = [
-    {'role': 'system', 'content': '严格按给定 schema 从案情抽取 JSON。未提及必须为 null，不得推断；只输出 JSON。'},
+    {'role': 'system', 'content': 'Extract one JSON object strictly from the given schema and case. Information not stated in the case must be null; do not infer. Output JSON only.'},
     {'role': 'user', 'content': 'SCHEMA:\n' + json.dumps(contract, ensure_ascii=False) + '\n\nCASE:\n' + case['fact']},
 ]
 client = OpenAI(api_key='ollama', base_url='http://127.0.0.1:11434/v1')
