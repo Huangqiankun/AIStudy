@@ -77,9 +77,9 @@ $env:PYTHONIOENCODING = 'utf-8'
 4. 用这些字段回答“历史运行记录了哪些阶段”；它不能替代本机新运行，也不能自动证明每个抽取值正确。
 
 ```powershell
-$evidence = Get-Content '.\validation\runs\20260730T044309Z-3_12-3ab8ec7b\evidence.json' -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 100
-$schemaCp = Get-Content '.\validation\checkpoints\official-seed37\schema-consolidation.json' -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 100
-$extractCp = Get-Content '.\validation\checkpoints\official-seed37\extraction-case-cail2018-47583d42744d74fd.json' -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 100
+$evidence = Get-Content '.\validation\runs\20260730T044309Z-3_12-3ab8ec7b\evidence.json' -Raw -Encoding UTF8 | ConvertFrom-Json
+$schemaCp = Get-Content '.\validation\checkpoints\official-seed37\schema-consolidation.json' -Raw -Encoding UTF8 | ConvertFrom-Json
+$extractCp = Get-Content '.\validation\checkpoints\official-seed37\extraction-case-cail2018-47583d42744d74fd.json' -Raw -Encoding UTF8 | ConvertFrom-Json
 $case = $extractCp.parsed.cases[0]
 
 [pscustomobject]@{
