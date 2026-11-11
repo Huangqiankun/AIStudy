@@ -2,7 +2,7 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter3.md`「RAG 基础：构建 Agent 的知识获取管道」§ 稠密嵌入、稀疏嵌入（第 243–381 行）
 > 实验 `vendor/ai-agent-book/chapter3/dense-embedding/`、`vendor/ai-agent-book/chapter3/sparse-embedding/`
-> 备课日期 2026-11-11 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-11-11 ｜ 授课日期 2026-11-11 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。45 分钟为参考，可跨会话；没有实际运行和理解检查时，不填完成状态。
 
@@ -45,7 +45,7 @@
 - 唯一改变：检索表示与候选/排序机制从 BM25 稀疏路线切换为 MiniLM 稠密路线。
 - 观察点：每条查询是否命中、第一篇相关文档排名、宏平均指标；不直接比较两路原始分数。
 - 预测问题：你预计哪类查询会让两路结果拉开差距？请分别给出“同义改写”和“精确错误码/产品编码”的理由。
-- 学员预测：待回答
+- 学员预测：`cat` 与 `kitten` 字面不匹配但语义相关，预计稠密路线更有机会；产品编码 `XK9-2B4-7Q1` 有精确字面信号，预计稀疏路线更稳定。课堂保留为待验证判断，不在运行前当结论。
 
 ## 3. 运行实验
 
@@ -62,7 +62,7 @@ $env:NO_PROXY = 'localhost,127.0.0.1,::1'
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 
-@'
+$corpusJson = @'
 [
   {"doc_id":"doc_kitten","title":"Playful kitten","text":"A playful kitten chased a ball of yarn across the room."},
   {"doc_id":"doc_feline","title":"Feline hunter","text":"A feline predator moved silently through the grass."},
@@ -71,18 +71,24 @@ $env:PYTHONIOENCODING = 'utf-8'
   {"doc_id":"doc_dog","title":"Playful dog","text":"A dog played fetch with a tennis ball in the park."},
   {"doc_id":"doc_training","title":"Neural training","text":"Gradient descent updates model parameters during neural network training."}
 ]
-'@ | Set-Content (Join-Path $lessonRoot 'corpus.json') -Encoding UTF8
+'@
 
-@'
+$labelsJson = @'
 {
   "cat": ["doc_kitten", "doc_feline"],
   "HTTP 404 error": ["doc_404"],
   "XK9-2B4-7Q1": ["doc_code"]
 }
-'@ | Set-Content (Join-Path $lessonRoot 'labels.json') -Encoding UTF8
+'@
+
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+[System.IO.File]::WriteAllText((Join-Path $lessonRoot 'corpus.json'), $corpusJson, $utf8NoBom)
+[System.IO.File]::WriteAllText((Join-Path $lessonRoot 'labels.json'), $labelsJson, $utf8NoBom)
 
 Get-ChildItem $lessonRoot | Select-Object Name, Length
 ```
+
+课堂首次用 Windows PowerShell 的 `Set-Content -Encoding UTF8` 写入后，`json.load()` 报 `Unexpected UTF-8 BOM`，尚未进入检索。学员用首字节检查确认 `EF BB BF`，改为无 BOM UTF-8 后，`corpus.json` 从 `5B`、`labels.json` 从 `7B` 开始。上方命令已改为核验后的无 BOM 写法。
 
 ### 步骤 B：核对稀疏 CLI
 
@@ -121,25 +127,44 @@ Set-Location 'F:\AIStudy\vendor\ai-agent-book\chapter3\dense-embedding'
 $env:D25_CORPUS = $corpus
 $env:D25_LABELS = $labels
 $env:D25_DENSE_OUT = Join-Path $lessonRoot 'lesson-d25-dense.json'
+$runnerPath = Join-Path $lessonRoot 'run_dense_d25.py'
 
-python -m uv run --extra ch3 --no-sync python -c @'
-import os, runpy, sys, types
+$runnerCode = @'
+import os
+import runpy
+import sys
+import types
+
 sys.modules["annoy"] = types.ModuleType("annoy")
 sys.modules["hnswlib"] = types.ModuleType("hnswlib")
 logger_stub = types.ModuleType("logger")
 logger_stub.VectorSearchLogger = type("VectorSearchLogger", (), {})
 sys.modules["logger"] = logger_stub
+
 sys.argv = [
-    "cli.py", "--corpus", os.environ["D25_CORPUS"],
-    "--labels", os.environ["D25_LABELS"], "--eval", "--top-k", "3",
+    "cli.py",
+    "--corpus", os.environ["D25_CORPUS"],
+    "--labels", os.environ["D25_LABELS"],
+    "--eval", "--top-k", "3",
     "--embedding-model", "sentence-transformers/all-MiniLM-L6-v2",
     "--output", os.environ["D25_DENSE_OUT"],
 ]
+
 runpy.run_path("cli.py", run_name="__main__")
 '@
+
+[System.IO.File]::WriteAllText($runnerPath, $runnerCode, [System.Text.UTF8Encoding]::new($false))
+$env:PYTHONPATH = (Get-Location).Path
+python -m uv run --extra ch3 --no-sync python $runnerPath
 ```
 
-**真实证据**：待学员运行并贴回输出。记录完整命令、退出状态、模型名和两个 JSON 路径。若模型加载或输入解析失败，先定位环境/输入，不把失败当检索结果。
+课堂最初把 here-string 直接传给 `python -c`，PowerShell 吞掉内部引号后报 `NameError: annoy`；改为临时启动器后，又因启动器目录在 `%TEMP%` 而找不到教材同目录的 `indexing`。最终用 `$env:PYTHONPATH = (Get-Location).Path` 补齐模块搜索路径后成功。两次错误都发生在模型加载和检索之前，不能计作稠密结果。
+
+**真实证据**（学员运行，2026-11-11）：
+
+- 稀疏：`cat` 返回空，recall/precision/RR 均为 0；`HTTP 404 error` 返回 `doc_404, doc_code`，相关文档第 1；产品编码只返回 `doc_code`，相关文档第 1。宏平均 recall@3=0.667、precision@3=0.500、MRR=0.667。
+- 稠密：MiniLM 成功加载，`pooling=mean`；`cat` 排名为 `doc_feline, doc_kitten, doc_dog`，两个相关文档都进入前三；另两条查询的相关文档也均为第 1。宏平均 recall@3=1.000、precision@3=0.444、MRR=1.000。
+- 收据：`%TEMP%\aistudy-d25\lesson-d25-sparse.json`、`lesson-d25-dense.json`。这是 6 篇文档、3 条查询各运行一次的本地记录，不证明任一路普遍更优或更稳定。
 
 ## 4. 逐段读真实轨迹
 
@@ -163,16 +188,18 @@ runpy.run_path("cli.py", run_name="__main__")
 
 学员用“输入 → 处理 → 输出”解释。重点定位：若同义词文档根本没有进入稀疏候选，调 BM25 排序参数能否挽救；若稠密最近邻本身与业务标注不符，问题是否已经发生在最终答案之前。
 
+**课堂源码结论**：稀疏路线先按 posting list 取“至少共享一个词”的候选，再计算 BM25；`cat` 相关文档没有共享词，因此调 `k1` / `b` 无法挽救。稠密路线把整段文本编码成一行向量，MiniLM 使用 mean pooling 后 L2 归一化；本次精确路径让查询与全部 6 篇文档点积排序，没有 BM25 式预过滤候选。向量最近只表示模型空间接近，`cat` 下的 `doc_dog` 说明语义相近不等于人工标签正确。
+
 ## 6. 单变量对照
 
 - 唯一改变：检索机制从 BM25 稀疏路线切换为 MiniLM 稠密路线。
 - 保持不变：同一语料、标注、查询集、`top_k=3`、指标口径；分别保存输出。
-- 对照前预测：待回答。
-- 真实轨迹与结果：待运行。
+- 对照前预测：同义改写预计更有利于稠密；精确编码预计更有利于稀疏，但“稳定”需多编码、多干扰语料的配对测试，单次排名不能证明。
+- 真实轨迹与结果：稠密补回 `cat` 两篇相关文档；精确错误码和产品编码两路都把相关文档排第 1，未出现胜负。两路原始分数未直接比较。
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据候选与排序源码讨论 | 换查询、扩语料或重复评测验证；不从 3 条查询推广到所有场景 |
+| 稀疏 `cat` 无候选；稠密召回两篇相关文档并带入 `doc_dog`；精确查询两路相关文档均第 1 | 表示机制解释当前差异：词项交集控制稀疏候选，嵌入空间允许同义召回也可能引入语义近邻噪声 | 加入相似但编码不同的干扰文档、多个罕见编码和查询改写做配对测试；相同确定性输入的机械重复不足以检验稳定性 |
 
 先核对条件确实固定，再解释差异。稠密与稀疏的原始得分量纲不同，不做数值相减；一次小语料评测只支持本次记录。
 
@@ -192,24 +219,30 @@ runpy.run_path("cli.py", run_name="__main__")
 
 卡住时换 Android 小例子复查：文档只写 `ActivityNotFoundException`，查询分别是完整异常类名和“找不到可处理 Intent 的页面”。
 
+**课堂实际检查**（2026-11-11）：
+
+1. 概念：起初把稠密说成“关键词语义检索”，又把两路差异归因于每次重新计算；经整段文本向量与确定性排序纠正，并用 `ActivityNotFoundException` 精确词/自然语言换例复查后通过。
+2. 预测：起初假定查询 `HTTP-404` 与文档 `HTTP 404 error` 有共享词；运行教材分词探针后观察前者为单 token、后者为三个 token，修正为先验证规范化与词项交集，再预测稀疏召回。能说明即使 `HTTP 404 error` 共享三词，通用词 `error` 仍会带入非相关候选。
+3. 定位：起初只说检查内容相关与语义接近；经输入/标签 → token/posting list → BM25 分项与排名 → 稠密全量相似度排名的链路复查后，能区分候选缺失、排序靠后和 top-k 截断。本次精确稠密路径无预过滤候选，目标第 5 表示已编码但在截断线外。
+
 ## 8. 可选 AI 代码演示
 
 默认不布置编程作业。PowerShell 创建的临时 JSON 与稠密导入隔离代码是讲师提供的实验胶水，学员负责预测、运行和解释，不要求改写；不修改 `vendor/`，不新增项目依赖。
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展
-- 尚未理解及证据：待开展
-- 下次从哪一小步继续：待开展
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）
+- 已理解到哪：能解释两路相关性证据；能根据 token/posting list、BM25 分项或全量余弦排名定位漏召回；能把单次观察与稳定性结论分开。
+- 尚未理解及证据：无阻塞缺口。本课未做多编码、多干扰语料或不同嵌入模型对照，不能评价生产稳定性。
+- 下次从哪一小步继续：Day 26 检索管道，从 BM25 基线进入稠密/稀疏并行召回、融合与重排。
+- 状态：✅
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：待运行；计划产物在 `$env:TEMP\aistudy-d25\`
-- 学员的原始预测与后续解释：待回答
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
+- 实际授课日期、用时、停在哪一步：2026-11-11；完成概念、真实双路对照、分词探针、源码剖析和三项理解检查。
+- 实验命令、模型、证据位置与必要真实摘录：BM25 `k1=1.5,b=0.75`；MiniLM `all-MiniLM-L6-v2, pooling=mean`；收据位于 `%TEMP%\aistudy-d25\`。稀疏/稠密宏平均 recall@3 为 0.667/1.000，MRR 为 0.667/1.000。
+- 学员的原始预测与后续解释：预测同义查询靠稠密、精确编码靠稀疏；实测后能限制为本次小语料观察，并提出加入语义相近干扰文档、多编码和查询改写的配对验证。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过（均含提示、缩小问题或换例复查）
 - 是否采用代码演示及原因：采用临时输入与进程内导入隔离；避免 Windows `annoy` 构建问题干扰检索机制对照
-- 本次观察、假设、待验证点：备课只核验 CLI、依赖限制与 MiniLM 可加载，未运行目标查询
+- 本次观察、假设、待验证点：稠密在本次语料补回同义表达但引入语义近邻噪声；精确查询两路均排第 1。待多编码、多干扰语料和查询格式扰动验证稳定性；`HTTP-404` 与 `HTTP 404` 的 token 不一致暴露规范化边界。
 - 对应备课 skill：`vendor/ai-agent-book/skills/rag-pipeline/SKILL.md`
-- 进度处理：开课后若中断，追加 Day 25 `▶` 日志；完成实验、对照、源码和三项检查后才记 `✅`。
+- 进度处理：已追加 Day 25 `✅` 日志；下一课 Day 26。
