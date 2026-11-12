@@ -70,6 +70,8 @@ Get-ChildItem "$env:USERPROFILE\.cache\huggingface\hub" -Directory |
 python -m uv run --extra ch3 --no-sync --with rank-bm25 python evaluate.py --help
 ```
 
+**步骤 B 真实输出（学员运行，2026-11-12）**：帮助信息确认 `--no-rerank` 仅禁用神经重排；`--no-dense` 会连带禁用融合与重排；`--top-k` 控制每路召回候选数，`--eval-k` 控制 Recall/nDCG 的指标截断位置；`--k-rrf` 和两路权重分别控制融合；`--offline` 强制只读模型缓存；`--output` 保存完整明细。此时只完成参数解析，尚未加载模型或执行检索。
+
 ### 步骤 C：运行双路检索与融合基线
 
 输入/处理/输出：读取教材内置语料和人工标注；同一查询分别做 BM25 与稠密检索，再同时生成 RRF 和归一化加权融合结果；关闭神经重排，输出各阶段指标与完整 JSON，用于判断候选来自哪一路、融合后名次怎样变化。运行前先完成预测。
