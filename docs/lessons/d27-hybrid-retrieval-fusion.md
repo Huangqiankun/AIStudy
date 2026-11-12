@@ -60,6 +60,8 @@ Get-ChildItem "$env:USERPROFILE\.cache\huggingface\hub" -Directory |
   Select-Object Name
 ```
 
+**步骤 A 真实输出（学员运行，2026-11-12）**：命中缓存目录 `models--sentence-transformers--all-MiniLM-L6-v2`。这只证明本机存在对应缓存条目；尚未验证模型文件完整或能够加载，也没有读取语料、执行检索。
+
 ### 步骤 B：核对 CLI
 
 输入/处理/输出：只解析帮助，核对阶段开关、候选数、融合参数和输出参数；不会加载模型或运行检索。
