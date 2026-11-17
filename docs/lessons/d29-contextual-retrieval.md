@@ -2,7 +2,7 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter3.md` § RAG 技巧：上下文感知检索（第 594–618 行）
 > 实验 `vendor/ai-agent-book/chapter3/contextual-retrieval/`
-> 备课日期 2026-11-13 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-11-13 ｜ 授课日期 2026-11-13、2026-11-17 ｜ 状态 ✅
 
 本文件是分步教学材料，不一次性贴入对话。45 分钟为参考，可跨会话；没有实际运行和理解检查时，不填完成状态。
 
@@ -37,7 +37,7 @@
 - 唯一改变：索引 `metadata.original_text`，还是索引已有的“前缀 + 原文”。
 - 观察点：每条查询的 gold 排名、`hit@k`、汇总 `recall@k`，以及代表性块的 `prefix/plain/contextual` 三个字段。
 - 预测问题：你预计三个 k 上都会同幅度变化吗？至少写出一种“前缀反而无帮助或有害”的可能原因。
-- 学员预测：待回答。
+- 学员预测：先判断 gold 会升高，理由是前缀可能补回身份信息；在看到 q08 plain 排第 16 后进一步预测它会改善但仍在 Top-5 外。实测为第 12，方向与区间均命中。经校准后能区分“前缀可信度”与“排名幅度”：后者还取决于区分词、候选竞争和 BM25 打分。
 
 ## 3. 运行实验
 
@@ -72,7 +72,9 @@ foreach ($chunk in $evidence.chunks) {
 $lessonDir = Join-Path $env:TEMP 'aistudy-d29-contextual'
 New-Item -ItemType Directory -Force $lessonDir | Out-Null
 $corpusPath = Join-Path $lessonDir 'corpus.json'
-ConvertTo-Json -InputObject $store -Depth 6 | Set-Content $corpusPath -Encoding utf8
+$corpusJson = ConvertTo-Json -InputObject $store -Depth 6
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+[System.IO.File]::WriteAllText($corpusPath, $corpusJson, $utf8NoBom)
 [pscustomobject]@{ chunks = $store.Count; corpus = $corpusPath }
 ```
 
@@ -94,7 +96,7 @@ python -m uv run --extra ch3 --no-sync --with rank-bm25 --with jieba python comp
   --corpus $corpusPath --mode plain --k 1 3 5 --per-query --output $plainOut
 ```
 
-**真实证据**：待学员运行并贴回输出。
+**真实证据**：学员首次运行时，PowerShell `Set-Content -Encoding utf8` 生成的临时 JSON 带 BOM；`json.load(..., encoding="utf-8")` 在建立索引前报 `Unexpected UTF-8 BOM`。以 `[System.Text.UTF8Encoding]::new($false)` 重写同一 `$store` 后，首三字节为 `123 13 10`，随后基线成功。该失败不含检索结果，不能用于判断实验预测。plain 实测加载 22 块、15 查询，`recall@1/3/5 = 60.0% / 86.7% / 93.3%`；收据为 `%TEMP%\aistudy-d29-contextual\lesson-d29-plain.json`。
 
 ## 4. 逐段读真实证据
 
@@ -107,9 +109,21 @@ python -m uv run --extra ch3 --no-sync --with rank-bm25 --with jieba python comp
 
 分别标注实测观察、解释假设、待验证判断；先看排名事实，再解释前缀中的哪些 token 改变 BM25 得分。
 
+**本次真实对照摘要**：
+
+| 指标 | plain | contextual | 变化 |
+|---|---:|---:|---:|
+| recall@1 | 60.0%（9/15） | 80.0%（12/15） | +20.0pp |
+| recall@3 | 86.7%（13/15） | 86.7%（13/15） | 0 |
+| recall@5 | 93.3%（14/15） | 93.3%（14/15） | 0 |
+| q08 gold 排名 | 16 | 12 | 上升 4 名，仍 miss@5 |
+| q09 gold 排名 | 5 | 4 | 上升 1 名，仍 hit@5 |
+
+q02、q11、q15 从第 2 升到第 1，解释了 `recall@1` 的三次新增命中。q08 和 q09 虽改善，但没有跨过 `k=5` 的命中边界，因此 `recall@5` 不变。代表性查询的 contextual Top-5 出现 `宪法_chunk_9` 与 `宪法_chunk_11` 等相邻竞争块；gold `宪法_chunk_10` 的前缀确实补入“全国人民代表大会常务委员会职权及工作机制”，但仍只排第 12。这支持“局部增益且竞争仍在”，不支持“正确前缀必然进入 Top-K”。
+
 ## 5. 追到关键源码
 
-关键源码总量控制在约 30 行，分三小段阅读：
+关键源码按数据加载、BM25 评测、前缀生成三小段阅读：
 
 - `compare_retrieval.py:75-103`：同一条目拆出 `plain/contextual/context` 三个视图。
 - `compare_retrieval.py:116-158`：指定字段分词建 BM25，计算 gold 排名与 `hit@k`。
@@ -118,13 +132,13 @@ python -m uv run --extra ch3 --no-sync --with rank-bm25 --with jieba python comp
 
 **输入 → 处理 → 输出**：相同 chunk 列表与 query → 选字段、分词、BM25 排序 → chunk ID 排名、命中与汇总指标。
 
-**学员解释**：待回答。
+**学员解释**：能沿源码说明 `content` 是“前缀 + 原文”、`metadata.original_text` 是 plain 视图；发现缺失 `original_text` 时 fallback 会让两路都索引 contextual 文本，破坏严格单变量。能用 `rank_pos=12 > 1/3/5` 解释三个 `hit@k=false`；能定位本次 q08 失败发生在 BM25 Top-K 之前，而不是回答模型忽略结果。阅读生成链后说明分别保存 `text/context/contextualized_text` 便于回原文审计幻觉、复现实际索引并重建 plain 基线。
 
 ## 6. 单变量对照
 
 - 唯一改变的条件：`--mode plain` 改为 `--mode contextual`，即 BM25 的索引文本从原文变成“已有前缀 + 同一原文”。
 - 保持不变：corpus 文件、chunk ID、原文、15 条查询、gold、分词器、BM25、k 值和脚本版本。
-- 对照前预测：待回答。
+- 对照前预测：q08 会从第 16 上升，但仍在 Top-5 外；实测第 12。
 
 ```powershell
 $contextualOut = Join-Path $lessonDir 'lesson-d29-contextual.json'
@@ -141,7 +155,7 @@ python -m uv run --extra ch3 --no-sync --with rank-bm25 --with jieba python comp
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待依据前缀 token、BM25 排名与源码讨论 | 用更多查询、不同分词或重新生成前缀复测 |
+| contextual 的 `recall@1` 从 60.0% 到 80.0%，`@3/@5` 不变；q08 16→12 | 前缀为部分块补入区分词，但相邻候选也得到相似身份词；正确前缀不保证跨过 Top-K 阈值 | 用更多查询、不同分词或重新生成前缀复测；另行审核前缀与全文的事实一致性 |
 
 ## 7. 理解检查：每次只问一题
 
@@ -157,24 +171,30 @@ python -m uv run --extra ch3 --no-sync --with rank-bm25 --with jieba python comp
 
 </details>
 
+**本次作答结果**：
+
+1. 概念通过：能说明索引期对知识块做“前缀 + 原文”的加法，并与运行期对会话/轨迹做摘要、筛选或截断的减法区分。
+2. 预测通过：判断所有块获得同一通用前缀时 gold 不一定上升，因为没有增加候选间区分度，仍需看原文、IDF、词频、长度归一化与具体排名。
+3. 定位通过：面对 recall 提升但前缀含原文不支持的主体，不记为知识质量成功；分别核对原文证据、去除错误前缀后的检索证据、以及 LLM 前缀生成证据。
+
 ## 8. 可选 AI 代码演示
 
 默认不布置编程作业。本课已有最小离线 BM25 对照，无需 Kotlin 移植。
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展
-- 尚未理解及证据：待开展
-- 下次从哪一小步继续：待开展
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）
+- 已理解到哪：能解释索引期加前缀的机制，预测排名与阈值指标变化，沿语料加载、BM25 排序、hit 计算和前缀生成源码定位证据边界。
+- 尚未理解及证据：无遗留缺口。过程中曾把 raw 块缺少总领信息继续当作 contextual 排名不足的原因，并提出检查“模型是否采用”；经前缀实查与无 LLM 的 BM25 链路复查后修正。
+- 下次从哪一小步继续：Day 30 / Agentic RAG。
+- 状态：✅
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：待开展
-- 实验命令、模型、证据位置与必要真实摘录：待运行；本课主实验无生成模型，使用教材 canonical validation 中已生成前缀。
-- 学员的原始预测与后续解释：待回答
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查
+- 实际授课日期、用时、停在哪一步：2026-11-13 开始，2026-11-17 完成；完成实验、源码与三项检查。
+- 实验命令、模型、证据位置与必要真实摘录：本课主实验无生成模型，使用教材 canonical validation 中已生成前缀；实际收据为 `%TEMP%\aistudy-d29-contextual\lesson-d29-plain.json` 与 `lesson-d29-contextual.json`。plain/contextual 的 recall@1 分别为 60.0%/80.0%，q08 为 16/12。
+- 学员的原始预测与后续解释：先预测排名升高；看到基线后预测 q08 改善但仍出 Top-5，实测吻合。能解释阈值未跨越不改变 recall，并把前缀正确性与检索排名分开验收。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过
 - 是否采用代码演示及原因：未安排，教材已有可控离线实验。
-- 本次观察、假设、待验证点：`--help` 已核验；标准依赖同步仍受 `annoy`/MSVC 阻断；README 默认 corpus 未随当前 sparse checkout 出现，故从仓库内 validation evidence 确定性重建临时 corpus。目标实验未运行。
+- 本次观察、假设、待验证点：标准依赖同步仍受 `annoy`/MSVC 阻断；README 默认 corpus 未随当前 sparse checkout 出现，故从仓库内 validation evidence 确定性重建临时 corpus。PowerShell UTF-8 BOM 曾在索引前阻断 JSON 解析，已将讲义改为无 BOM 写入。当前结果只支持这 22 块、15 查询、已有前缀、jieba+BM25 的局部结论；未重新生成前缀、未运行 dense/hybrid、未验证最终回答模型。
 - 对应备课 skill：`vendor/ai-agent-book/skills/knowledge-org/SKILL.md`
-- 进度处理：仅备课，不追加上课日志；授课结束或中断后再追加 Day 29 日志。
+- 进度处理：已追加 Day 29 `✅` 日志；下一课 Day 30。
