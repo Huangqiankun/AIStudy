@@ -51,6 +51,7 @@
 | 27 | 2026-11-12 | [混合检索：融合为什么不等于重排](lessons/d27-hybrid-retrieval-fusion.md) | ✅ | 曾把未知归因随机、把 RRF 结果归因正确答案，并反向修改重排池；经双路实测、逐查询候选、源码、分数单变量对照和三项复查后通过 |
 | 28 | 2026-11-13 | [W4 记忆与检索证据链复盘（buffer）](lessons/d28-week4-buffer-review.md) | ✅ | 曾把 RRF 第 6 名误判为融合阶段已丢失；经冻结收据、源码链、top-k 对照和 `list.take(5)` 换例后通过 |
 | 29 | 2026-11-17 | [上下文感知检索](lessons/d29-contextual-retrieval.md) | ✅ | 曾把 raw 块缺总领信息继续当 contextual 排名不足原因，并误查回答模型；经 plain/contextual 实测、q08 前缀与 Top-K、源码链及三项检查后通过 |
+| 30 | 2026-11-18 | [Agentic RAG](lessons/d30-agentic-rag.md) | ✅ | 曾把关键词拆分视为必然提分、混淆单次 top-k 与合并去重；经离线基线、同次数查询替换对照、回传源码、条号口径与三项检查后通过；未实跑模型自主检索 |
 
 ---
 
