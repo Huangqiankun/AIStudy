@@ -56,6 +56,7 @@
 | 32 | 2026-11-19 | [日志脱敏](lessons/d32-log-sanitization.md) | ✅ | 曾把口令原值视为必要排障信息、主张保留校验失败的身份证；经离线基线、身份证校验诊断、字段名对照、源码和三项检查后通过；未运行模型脱敏或生产日志链 |
 | 33 | 2026-11-20 | [Mem0 ADD-only](lessons/d33-mem0-add-only-retrieval.md) | ✅ | 曾把保留新旧事实的责任误说成移到查询侧；经离线相关性/时间对照、add/search 源码边界与三项检查后通过；未运行 Mem0、模型或向量库 |
 | 34 | 2026-11-20 | [Memobase Profile 与 Event Memory](lessons/d34-memobase-profile-event.md) | ✅ | 曾把 Profile 说成非时间事件表，并忽略探针只检查 `created_at`；经视图 A/B、源码链、机械规则换例和三项检查后通过；未运行 Memobase、模型或存储后端 |
+| 35 | 2026-11-23 | [W5 记忆系统证据链复盘（buffer）](lessons/d35-week5-buffer-review.md) | ✅ | 曾连续误判第一断点并混淆关键词评估与真实检索；经门控 A/B、评分源码、回读→检索→请求→答案换例和三项检查后通过；未运行真实记忆系统或生产日志链 |
 
 ---
 

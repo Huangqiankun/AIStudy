@@ -2,7 +2,7 @@
 
 > 章节：W5 / ch3 buffer 复盘（`vendor/ai-agent-book/book/chapter3.md`）
 > 实验：复用 Day 31 的离线评估器与示例 fixture，构造分层审计收据；不运行 Mem0、Memobase、模型或存储后端
-> 备课日期 2026-11-23 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-11-23 ｜ 授课日期 2026-11-23 ｜ 状态 ✅
 
 本日是 buffer 日，不引入 Day 36 的感知工具，只复盘 Day 29–34。本文是分步教学材料，不一次性贴入对话；没有实际运行、源码讲解、单变量对照和三项理解检查时，不填完成状态。
 
@@ -40,7 +40,7 @@
 - 唯一变量：发布门 `D35_GATE=keyword` 或 `D35_GATE=relation`。
 - 观察点：`stage_checks`、`first_business_break`、`keyword_evaluation`、`privacy_check`、`release_allowed` 和 `input_fingerprint`。
 - 预测问题：只改变发布门后，哪些字段应该保持不变，哪个字段可能改变？这能说明哪一层的问题？
-- 学员预测：待回答。
+- 学员预测：最初认为 `input_fingerprint`、`stage_checks`、`first_business_break` 不变，但把 `keyword_evaluation` 和 `privacy_check` 也列为可能变化，理由是“评估方式不同”。经澄清两种检查始终执行、只改变哪个结果接入发布门后，修正为除 `gate` 与 `release_allowed` 外其余观察字段不变；并预测 relation 门下 `release_allowed=false`。
 
 ## 3. 运行实验
 
@@ -157,7 +157,32 @@ $env:D35_GATE = 'keyword'
 $d35Probe | python -m uv run --no-sync --extra ch3 python -
 ```
 
-**真实证据**：待学员运行并贴回完整 JSON；记录控制台是否回到提示符、退出状态和实际输出，不把准备好的代码当已执行。
+**真实证据（2026-11-23，学员亲自运行并贴回）**：步骤 A 无报错并回到 PowerShell 提示符；基线打印 `Loaded 60 test cases` 后输出 JSON，随后回到提示符，未单独采集 `$LASTEXITCODE`。必要摘录：
+
+```json
+{
+  "gate": "keyword",
+  "input_fingerprint": "bc45ca5ef3a5",
+  "stage_checks": {
+    "persistent_readback": true,
+    "retrieval_result": true,
+    "answer_request": true,
+    "answer_semantics": false
+  },
+  "first_business_break": "answer_semantics",
+  "keyword_evaluation": {
+    "reward": 1.0,
+    "passed": true,
+    "reasoning": "Recalled 2/2 gold facts."
+  },
+  "privacy_check": {
+    "raw_value_leak_after_sanitization": false
+  },
+  "release_allowed": true
+}
+```
+
+`Loaded 60 test cases` 是构造教材 framework 时读取测试集的输出，不是本探针运行了 60 个真实记忆系统用例的证据。
 
 ## 4. 逐段读真实收据
 
@@ -165,12 +190,12 @@ $d35Probe | python -m uv run --no-sync --extra ch3 python -
 
 | 阶段 | 本课证据字段 | 能证明什么 | 不能证明什么 | 学员解释 |
 |---|---|---|---|---|
-| 持久化回读 | `stage_checks.persistent_readback` | 固定事实在回读对象中是否保持字段关系 | 真实数据库已写入、跨进程可读 | 待回答 |
-| 检索结果 | `stage_checks.retrieval_result` | 探针的检索对象是否保持字段关系 | 真实混合检索、时间排序或 Agent 自主查询已运行 | 待回答 |
-| 回答请求 | `stage_checks.answer_request` | 探针中的正确记忆是否进入回答输入 | 模型一定采用正确 | 待回答 |
-| 最终语义 | `stage_checks.answer_semantics` | 两个号码是否落在正确字段角色 | 其他未检查语义也正确 | 待回答 |
-| 评估门 | `keyword_evaluation` | 当前关键词规则怎样评分 | 字段—值关系正确 | 待回答 |
-| 隐私门 | `privacy_check` | 脱敏后是否还出现两项已知原值 | 生产日志链无旁路、业务回答正确 | 待回答 |
+| 持久化回读 | `stage_checks.persistent_readback` | 固定事实在回读对象中是否保持字段关系 | 真实数据库已写入、跨进程可读 | 识别为通过；经纠正后不再因它位于链首就把故障猜到这里 |
+| 检索结果 | `stage_checks.retrieval_result` | 探针的检索对象是否保持字段关系 | 真实混合检索、时间排序或 Agent 自主查询已运行 | 初次误判为第一断点；逐层代入后确认它完整复制了回读结果 |
+| 回答请求 | `stage_checks.answer_request` | 探针中的正确记忆是否进入回答输入 | 模型一定采用正确 | 能说明上游证据进入了探针中的请求对象 |
+| 最终语义 | `stage_checks.answer_semantics` | 两个号码是否落在正确字段角色 | 其他未检查语义也正确 | 经 Android 的 Room→DAO→ViewModel→界面换例，正确定位为第一断点 |
+| 评估门 | `keyword_evaluation` | 当前关键词规则怎样评分 | 字段—值关系正确 | 能说明关键词绿灯与语义失败不矛盾，各自检查不同条件 |
+| 隐私门 | `privacy_check` | 脱敏后是否还出现两项已知原值 | 生产日志链无旁路、业务回答正确 | 能限定为两项已知原值未出现，不外推为完全脱敏 |
 
 `first_business_break` 只在这份显式规则和合成收据内定位最早失败层；它不是对真实 Mem0、Memobase 或模型的诊断结果。
 
@@ -187,14 +212,14 @@ $d35Probe | python -m uv run --no-sync --extra ch3 python -
 
 **连接到本课收据**：`keyword_evaluation` 来自这段教材代码；`stage_checks` 和 `privacy_check` 是本课离线探针额外构造的独立检查。三者不能互相冒充。
 
-**学员解释**：待回答。
+**学员解释**：能从 `_fact_matched` 的 `in` 判断说明它只检查值是否出现，不解析字段关系；能从命中计数与阈值说明 `passed=true` 最多证明当前回答按该规则命中足够比例的 gold facts，不能证明键值对正确。曾把它称为“关键词检索正确”，经纠正后能区分关键词评估与真实检索。
 
 ## 6. 单变量对照
 
 - 唯一改变的条件：`D35_GATE: keyword → relation`。
 - 保持不变：同一 gold、同一最终回答、同一回读/检索/请求收据、同一脱敏规则和同一探针代码。
 - 核对方式：比较两次 `input_fingerprint`；它相同只证明探针参与指纹的输入相同，不证明真实外部系统状态相同。
-- 对照前预测：待回答。
+- 对照前预测：`input_fingerprint`、`stage_checks`、`first_business_break`、`keyword_evaluation`、`privacy_check` 保持不变，`gate` 改变，`release_allowed` 变为 `false`。
 
 ```powershell
 $env:D35_GATE = 'relation'
@@ -203,9 +228,11 @@ $d35Probe | python -m uv run --no-sync --extra ch3 python -
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据两份收据讨论 | 若要外推到真实系统，须采集真实写入/回读、检索、回答请求、答案、评分与生产日志链 |
+| 两次指纹均为 `bc45ca5ef3a5`；阶段检查、第一断点、关键词评分与隐私检查完全相同；`gate` 从 `keyword` 变为 `relation`，`release_allowed` 从 `true` 变为 `false` | 两种检查始终执行，唯一变化是发布门由读取 `keyword.passed` 改为读取 `answer_roles_correct` | 若要外推到真实系统，须采集真实写入/回读、检索、回答请求、答案、评分与生产日志链；本次不证明关系门覆盖所有语义错误 |
 
 对照只检验“发布门选择”这个变量；不预设结果，若指纹或其他固定字段变化，先排查实验条件而不是解释门控效果。
+
+对照由学员于 2026-11-23 实跑，输出完整 JSON 并回到 PowerShell 提示符，无报错，未单独采集退出码。
 
 ## 7. 理解检查：每次只问一题
 
@@ -223,24 +250,31 @@ $d35Probe | python -m uv run --no-sync --extra ch3 python -
 
 卡住时换成 Android 的 Room → DAO → ViewModel → UI → Espresso → Logcat 小例子，只补具体混淆点，再重新检查。
 
+**实际验收记录**：
+
+1. 概念通过：说明关键词评估只核对值出现，不能证明键值关系；脱敏检查只覆盖已知值，不能证明所有敏感内容和所有日志路径都安全。经纠正后不再把关键词评估称为真实检索。
+2. 预测通过：给定持久化回读完整、检索漏掉路由号的换例，正确定位 `retrieval_result`；起初只提出查看 BM25 候选池，补充后能说明还要核对实际检索路由、用户过滤、融合、重排与 top-k 截断，不能仅凭单路缺失断言根因。
+3. 定位通过：能按“持久化回读 → 检索收据 → 实际回答请求 → 最终回答”排查旧地址；起初遗漏持久化回读与最终采用，经补充后在前三层都有上海而答案仍为北京的换例中，正确定位到最终回答层。
+
 ## 8. 可选 AI 代码演示
 
 第 3、6 节就是 AI 准备的最小离线演示。学员只需预测、运行和解释；不修改 `vendor/`，不新增依赖或工程。它复用教材评估器和 fixture，但 write/readback/retrieval/request、关系检查与脱敏检查均为本课显式构造，不代表真实框架执行。
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展。
-- 尚未理解及证据：待开展。
-- 下次从哪一小步继续：待开展。
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）。
+- 已理解到哪：能区分业务语义、评估有效性与隐私安全三条证据链；能沿回读、检索、请求、答案找第一处失败，并审计门控接线。
+- 曾有卡点：连续把第一断点猜成 `retrieval_result`、`persistent_readback`，经逐层布尔值和 Android UI 换例后修正；故障定位时曾把写入回执当持久化证据，并遗漏最终采用层。
+- 尚未验证：真实记忆系统、Mem0、Memobase、LLM 回答、生产日志链和关系门的全面性；本课只验证明确构造的离线探针。
+- 下次从哪一小步继续：Day 36，进入 W6 工具章节的感知工具。
+- 状态：✅。
 
 ## 10. 讲师备注
 
 - Day 35 是 buffer 日，不引入 Day 36 工具章节内容。
-- 实际授课日期、用时、停在哪一步：待开展。
-- 实验命令、证据位置与必要真实摘录：待运行。
-- 学员的原始预测与后续解释：待回答。
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
+- 实际授课日期：2026-11-23；离线基线、关系门对照、源码讲解与三项理解检查均完成。
+- 实验命令与证据位置：在同一 PowerShell 会话中运行 `$d35Probe`；基线 `D35_GATE=keyword`、对照 `D35_GATE=relation`，必要真实摘录已写入第 3、6 节。
+- 学员的原始预测与后续解释：最初误以为切换发布门会让关键词评估与隐私检查也变化；澄清并行检查与门控接线后，准确预测所有固定字段及 `release_allowed=false`。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过。
 - 本课综合 Day 29–34 的阶段边界；不重复宣称已实跑 Contextual Retrieval、Agentic RAG、完整记忆系统、Mem0、Memobase、模型评判或生产日志链。
 - 对应备课 skill：`vendor/ai-agent-book/skills/memory-system/SKILL.md`。
 - 进度处理：授课结束或中断后在 `docs/progress.md` 末尾追加 Day 35 日志；仅备课不追加日志、不提前标完成。
