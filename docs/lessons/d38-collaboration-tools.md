@@ -2,9 +2,9 @@
 
 > 章节 `vendor/ai-agent-book/book/chapter4.md` § 协作工具（第 382–427 行）
 > 实验 `vendor/ai-agent-book/chapter4/collaboration-tools/`
-> 备课日期 2026-11-25 ｜ 授课日期 2026-11-25 ｜ 状态 ▶ 进行中
+> 备课日期 2026-11-25 ｜ 授课日期 2026-11-25 ｜ 状态 ✅ 已完成
 
-本文件是分步教学材料，不一次性贴入对话。实验与对照尚未由学员运行，理解检查尚未完成。
+本文件是分步教学材料，不一次性贴入对话。实验、单变量对照、源码剖析和三项理解检查已完成。
 
 ## 1. 建立概念：交接不是复制整段聊天
 
@@ -43,7 +43,7 @@
 - 唯一改变：`--strategy minimal` → `--strategy llm_generated`。
 - 观察点：两组 `prepared_context` 的事实覆盖、敏感信息、token 数与离线标记；不把 `status=completed` 或占位 `result` 当作真实模型完成业务判断的证据。
 - 预测问题：两组分别会收到哪些事实？哪组可能更贵？支付信息会不会进入交接文本？现有输出能否证明真实子 Agent 已正确判断退款？请说明理由。
-- 学员预测：待回答。
+- 学员预测：`minimal` 只保留业务规则；`llm_generated` 保留订单事实与业务规则，后者在字段层面足以支持退款判断。实测与该预测一致；支付字段过滤和真实模型调用另按证据核对。
 
 ## 3. 运行实验
 
@@ -65,14 +65,23 @@ python -m uv run --extra ch4 python main.py subagent spawn -h
 
 ### 步骤 B：运行 minimal 基线
 
-输入/读取：任务、父上下文、手选字段列表和隐私规则。处理：`minimal` 只从父上下文挑出 `business_rules`，构造带来源标签的交接文本，再走离线确定性子 Agent 回合。输出/用途：观察实际交接文本、token 数与离线说明；不要从命令说明预判字段的真实值。
+输入/读取：任务、逐行父上下文、手选的业务规则文本和隐私规则。处理：`minimal` 只把手选文本构造成带来源标签的交接内容，再走离线确定性子 Agent 回合。输出/用途：观察实际交接文本、token 数与离线说明。
 
 ```powershell
+$parentContext = @'
+case_facts: order_id=A12345, amount_yuan=299, within_days=7, vip_level=gold
+business_rules: 7 天内、金额小于 500 元、gold 会员可自动批准退款。
+payment_info.card_number: 6222-0000-1111-2222
+payment_info.cvv: 123
+'@
+
+$minimalSlice = 'business_rules: 7 天内、金额小于 500 元、gold 会员可自动批准退款。'
+
 python -m uv run --extra ch4 python main.py subagent spawn `
   --task '根据订单事实与业务规则，判断这笔退款是否可自动批准，并说明依据。' `
   --strategy minimal --mode sync --role '退款审批子 Agent' `
-  --parent-context '{"case_facts":{"order_id":"A12345","amount_yuan":299,"within_days":7,"vip_level":"gold"},"business_rules":"7 天内、金额小于 500 元、gold 会员可自动批准退款。","payment_info":{"card_number":"6222-0000-1111-2222","cvv":"123"}}' `
-  --minimal-slice '["business_rules"]' `
+  --parent-context $parentContext `
+  --minimal-slice $minimalSlice `
   --business-rules '只保留任务直接相关事实，不传递支付卡号、CVV、密码或令牌。'
 ```
 
@@ -86,12 +95,17 @@ python -m uv run --extra ch4 python main.py subagent spawn `
 python -m uv run --extra ch4 python main.py subagent spawn `
   --task '根据订单事实与业务规则，判断这笔退款是否可自动批准，并说明依据。' `
   --strategy llm_generated --mode sync --role '退款审批子 Agent' `
-  --parent-context '{"case_facts":{"order_id":"A12345","amount_yuan":299,"within_days":7,"vip_level":"gold"},"business_rules":"7 天内、金额小于 500 元、gold 会员可自动批准退款。","payment_info":{"card_number":"6222-0000-1111-2222","cvv":"123"}}' `
-  --minimal-slice '["business_rules"]' `
+  --parent-context $parentContext `
+  --minimal-slice $minimalSlice `
   --business-rules '只保留任务直接相关事实，不传递支付卡号、CVV、密码或令牌。'
 ```
 
-**真实证据**：待学员运行并贴回输出。控制台输出不含真实 LLM 请求收据；如未来配置真实 provider，还需单独保存和核对 request/response receipt。
+**真实证据（2026-11-25，学员 PowerShell）**：
+
+- 首次按 JSON 字段列表传 `--minimal-slice '["business_rules"]'` 时，`prepared_context` 出现字面量 `[business_rules]`，没有取得字段值；这是 PowerShell → Python CLI 的嵌套引号传参失真，不能作为策略对照。改用工具同样支持的纯文本 parent context 与手选文本后重跑。
+- 有效 `minimal`：`context_tokens=89`、`prep_tokens=0`、`prompt_tokens=0`；`prepared_context` 只有 task 与完整业务规则，没有订单事实或支付信息。
+- 有效 `llm_generated` 离线替身：`context_tokens=130`、`prep_tokens=0`、`prompt_tokens=0`；`prepared_context` 含订单事实与业务规则，没有卡号/CVV 行，并明确标注“规则式离线摘要生成、未调用 LLM”。
+- 两组 `result` 都明确标注离线模拟与占位结论。控制台没有真实 provider 请求收据，因此不能证明模型收到、理解或采用交接内容。
 
 ## 4. 逐段读真实轨迹
 
@@ -99,10 +113,10 @@ python -m uv run --extra ch4 python main.py subagent spawn `
 
 | 片段 | 真实摘录 / 证据字段 | 能证明什么 | 不能证明什么 | 学员解释 |
 |---|---|---|---|---|
-| 策略输入 | 待运行 | CLI 实际采用的 strategy 与参数 | 策略内部一定正确 | 待回答 |
-| 交接文本 | `prepared_context` 待运行 | 程序准备并保存了哪些移交内容 | 在线模型实际收到、理解或使用 | 待回答 |
-| 消息桥接 | 结合源码核对 | prepared context 被放进子 Agent `user` 消息对象 | 该对象已发到 provider | 待回答 |
-| 子 Agent 结果 | 待运行 | 离线桩返回了什么、状态如何更新 | 真实模型完成了退款判断 | 待回答 |
+| 策略输入 | 两组分别回报 `minimal` / `llm_generated` | CLI 实际采用的 strategy 与参数 | 策略内部一定正确 | 能区分生命周期状态与业务完成 |
+| 交接文本 | minimal 89 tok；离线摘要 130 tok | 程序准备并保存了哪些移交内容 | 在线模型实际收到、理解或使用 | 能按订单事实、规则与隐私字段检查充分性 |
+| 消息桥接 | 源码第 405–412 行 | prepared context 被放进子 Agent `user` 消息对象 | 该对象已发到 provider | 明确还需实际 request/messages 收据 |
+| 子 Agent 结果 | `prompt_tokens=0`，离线占位 `done` | 离线桩返回且本地状态更新 | 真实模型完成了退款判断 | 不再把 `success/completed` 当业务成功 |
 
 分别核对：交接策略执行、交接文本形成、消息对象组装、provider 请求、子 Agent 结果、主 Agent 后续采用。缺少后两层证据时不跨层下结论。
 
@@ -118,18 +132,18 @@ python -m uv run --extra ch4 python main.py subagent spawn `
 
 输入 → 处理 → 输出：task / parent context / strategy → 选择或摘要 → `prepared_context` 与成本字段 → `messages`。这里能核对“程序准备和组装了什么”；由于第 340–341 行会转入离线回合，本课运行不会生成真实 provider 请求。
 
-学员解释：待回答。
+学员解释：能说明 `picked` 为空时只保留 task；`prep_tokens=0` 不等于没有本地过滤与格式化；固定字符串规则会漏掉 `pan` 等别名并可能误删含 `password` 的普通行；本地 `messages` 对象不证明 provider 请求已经发生。
 
 ## 6. 单变量对照
 
 - 唯一改变：`--strategy minimal` → `--strategy llm_generated`。
 - 保持不变：task、parent context、role、mode、minimal slice、business rules、依赖与离线运行条件。
-- 对照前预测：待回答。
-- 真实轨迹与结果：待运行。
+- 对照前预测：minimal 只有业务规则；离线摘要保留订单事实与业务规则，字段层面更充分。
+- 真实轨迹与结果：预测命中。minimal 89 tok；离线摘要 130 tok；两组均无支付原值、无模型调用。离线摘要的“充分”只针对交接字段，不代表真实业务判断完成。
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 由策略分支与过滤源码解释 | 若接入真实 LLM，生成上下文是否同样完整、无泄漏且能支持正确决策 |
+| 策略变化后交接文本由“task + 规则”变成“task + 订单事实 + 规则”；卡号/CVV 未出现 | 由 `_prepare_minimal_context`、离线 `_offline_summarize_context` 与固定敏感标记解释 | 若接入真实 LLM，生成上下文是否同样完整、无泄漏且能支持正确决策 |
 
 先核对唯一变量确实生效。即使离线 `result.status` 为 `done`，也只代表确定性桩按约定返回，不把它计作真实子 Agent 的业务成功。
 
@@ -153,17 +167,17 @@ python -m uv run --extra ch4 python main.py subagent spawn `
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展。
-- 尚未理解及证据：待开展。
-- 下次从哪一小步继续：待开展。
-- 状态：▶ 进行中。
+- 已理解到哪：能区分交接文本、本地消息对象、provider 请求、模型响应、主 Agent 采用与业务完成；能根据 `prepared_context` 判断字段充分性，并识别离线替身的证据边界。
+- 尚未理解及证据：无阻塞性缺口。初始把订单号视为审批条件，后能区分定位字段与金额/天数/会员等级三项决策条件；初始误判固定关键词能识别 `pan` 卡号，经逐行匹配换例后修正。
+- 下次从哪一小步继续：Day 39 主动工具发现。
+- 状态：✅ 已完成。
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：2026-11-25 已开始，待记录。
-- 实验命令、证据位置与必要真实摘录：待学员运行；当前环境未配置 OpenAI/OpenRouter Key。
-- 学员的原始预测与后续解释：待回答。
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
-- 本次观察、假设、待验证点：已实测 CLI `--help` 可用且 UTF-8 正常；未运行本课目标命令。源码显示无 Key 时使用规则式离线摘要与离线占位回合；真实模型接收与使用仍待未来在线收据验证。
+- 实际授课日期、用时、停在哪一步：2026-11-25，完成实验、对照、源码与三项检查。
+- 实验命令、证据位置与必要真实摘录：学员 PowerShell 控制台；minimal `89/0/0`，离线摘要 `130/0/0`（依次为 context/prep/prompt tokens）；两组结果均明确为离线占位。
+- 学员的原始预测与后续解释：预测 minimal 只留规则、离线摘要保留订单事实与规则并在字段层面足以判断，实测命中；能解释为什么生命周期完成不等于真实模型或业务完成。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过。
+- 本次观察、假设、待验证点：实测离线规则按固定字符串逐行过滤，`card_number`/`cvv` 行未进入交接文本；源码推导 `pan` 别名可能漏过滤、含 `password` 的普通行可能误删。未验证真实 LLM、provider 请求/响应、真实计费 token 或主 Agent 采用结果。
 - 对应备课 skill：`vendor/ai-agent-book/skills/tool-design/SKILL.md`。
-- 进度处理：课程结束或中断后才向 `docs/progress.md` 追加日志；仅建立讲义不记录完成。
+- 进度处理：已向 `docs/progress.md` 追加 Day 38 完成日志。
