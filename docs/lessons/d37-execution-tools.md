@@ -152,10 +152,15 @@ if (Test-Path (Join-Path $work 'broken.py')) { Get-Content (Join-Path $work 'bro
 
 ## 9. 卡点（课堂后共同记录）
 
-- 待课堂完成后填写。
+- 学员一开始正确区分了“工具返回失败”和“副作用未发生”，并保留了先写后回滚的可能性。
+- 追源码时曾把第 82 行的验证调用说成首次副作用，但同时正确识别了失败分支会提前返回；经纠正后明确第 94 行 `write_text()` 才是实际写入点。
+- 故障定位时最初只考虑“验证阶段是否创建文件”；缩小问题后，能优先核对工具使用的绝对路径与观察路径，而不是无信息增益地重复运行。
+- 实测证据：开启验证时返回 `success=false`、`verification=failed` 且 `exists=False`；保持工作区、路径、内容和覆盖设置不变，仅增加 `--no-verify` 后返回 `success=true`、`verification=skipped`，文件存在且回读为 `def broken():`。
+- 下次从哪一小步继续：Day 38，进入协作工具，先区分“子 Agent 返回结果”和“主 Agent 已正确采用结果”。
 
 ## 10. 讲师备注
 
 - 备课已核对 `cli.py --help` 与 `write --help`，未代跑本课目标写入实验。
 - 当前实验只走本地 CLI 与确定性 Python `compile()` 校验；没有验证 MCP stdio、模型审批、容器沙盒或外部系统副作用。
 - 结束时必须分别记录工具结果与 `Test-Path`/回读，不把任一方单独包装成完整结论。
+- 课堂完成了非法 Python 的验证开/关单变量对照、`file_tools.py` 与 `llm_helper.py` 源码剖析，以及概念复述、变化预测、故障定位三项检查。

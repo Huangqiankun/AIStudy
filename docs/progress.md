@@ -58,6 +58,7 @@
 | 34 | 2026-11-20 | [Memobase Profile 与 Event Memory](lessons/d34-memobase-profile-event.md) | ✅ | 曾把 Profile 说成非时间事件表，并忽略探针只检查 `created_at`；经视图 A/B、源码链、机械规则换例和三项检查后通过；未运行 Memobase、模型或存储后端 |
 | 35 | 2026-11-23 | [W5 记忆系统证据链复盘（buffer）](lessons/d35-week5-buffer-review.md) | ✅ | 曾连续误判第一断点并混淆关键词评估与真实检索；经门控 A/B、评分源码、回读→检索→请求→答案换例和三项检查后通过；未运行真实记忆系统或生产日志链 |
 | 36 | 2026-11-24 | [感知工具：显式截断与证据边界](lessons/d36-perception-tools.md) | ✅ | 曾把 content 当成功证明、把模型答错先建议重复同参数或换模型；经 max_length 对照、源码、续读边界与三项检查后通过；未验证 MCP stdio 或模型请求 |
+| 37 | 2026-11-25 | [执行工具：写入前验证与副作用证据链](lessons/d37-execution-tools.md) | ✅ | 曾把第 82 行验证误作副作用点，故障定位初始只查验证阶段；经验证开关 A/B、源码顺序、绝对路径核对选择和三项检查后通过；未验证 MCP stdio、模型审批、容器沙盒或外部系统 |
 
 ---
 
