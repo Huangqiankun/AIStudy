@@ -62,6 +62,7 @@
 | 38 | 2026-11-25 | [协作工具：够用但不过量的上下文交接](lessons/d38-collaboration-tools.md) | ✅ | 初始将订单号误作审批条件，并误判固定关键词能识别 `pan` 卡号；经 PowerShell 传参修正、minimal/离线摘要对照、源码与三项检查后通过；未验证真实 LLM、provider 请求或主 Agent 采用结果 |
 | 39 | 2026-11-26 | [主动工具发现](lessons/d39-active-tool-discovery.md) | ✅ | 预筛选漏新闻的预测经实测修正，明确由 Harness 匹配候选；完成预筛选与主动发现、源码及三项检查；两组槽位均 2/2，未验证真实模型或业务工具 |
 | 40 | 2026-11-27 | [主动工具选择](lessons/d40-active-tool-selection.md) | ✅ | 初始预测 K=5 会漏召回，逐任务实测修正，K=1 对照仍为 10/10；完成源码与三项检查，确认离线召回的证据边界 |
+| 41 | 2026-11-27 | [MCP 协议证据链](lessons/d41-mcp-protocol-evidence-chain.md) | ✅ | 初始把版本差异预测为握手期，并一度把轨迹记录当执行证明；经 MCP 2.x/default 对照、源码门禁、产物覆盖诊断与三项检查后通过；未验证真实模型、远程 HTTP 或 Skill Hub 安装 |
 
 ---
 
@@ -77,7 +78,7 @@
 | W3 | 15–20（21 buffer+复盘） | ch2 🟢 下 | 工具定义设计 / Agent Skills 是什么 / Skills 在上下文中的位置 / Agent 状态栏 / 上下文压缩 / 隔离优于压缩 |
 | W4 | 22–27（28 buffer） | ch3 🔵 记忆(上) | 四种渐进式记忆策略 / 结构化索引 / 知识抽取 / 稠密与稀疏向量 / 检索管道（BM25 实验与剖析） |
 | W5 | 29–34（35 buffer） | ch3 🔵 记忆(下) + ch4 起 | Contextual Retrieval / Agentic RAG / 记忆评估 / 日志脱敏（`mem0`、`memobase` 只读不跑） |
-| W6 | 36–41（42 buffer） | ch4 🔵 工具 | 感知工具 / 执行工具 / 协作工具 / 主动工具发现 / 主动工具选择 |
+| W6 | 36–41（42 buffer） | ch4 🔵 工具 | 感知工具 / 执行工具 / 协作工具 / 主动工具发现 / 主动工具选择 / MCP 与 Skill Hub 协议证据链 |
 | W7 | 43–48（49 buffer） | ch5 🟣 Coding Agent | 最小 coding-agent harness / provider failover / 日志诊断 / 代码作为元能力（**学员最有优势的一周**） |
 | W8 | 50–55（56 buffer） | ch6 🟣 交互 | 异步与事件驱动 / 事件触发 / live-audio / 流式语音 / phone-agent（机器人类实验全跳过） |
 | W9 | 57–62（63 buffer） | ch7 🟡 评估 **重点周** | 评估环境与指标 / tau2-bench-eval / **android-world 三天（D59–61）** / Elo 与成本分析 + 显著性检验实验 |
