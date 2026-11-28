@@ -63,6 +63,7 @@
 | 39 | 2026-11-26 | [主动工具发现](lessons/d39-active-tool-discovery.md) | ✅ | 预筛选漏新闻的预测经实测修正，明确由 Harness 匹配候选；完成预筛选与主动发现、源码及三项检查；两组槽位均 2/2，未验证真实模型或业务工具 |
 | 40 | 2026-11-27 | [主动工具选择](lessons/d40-active-tool-selection.md) | ✅ | 初始预测 K=5 会漏召回，逐任务实测修正，K=1 对照仍为 10/10；完成源码与三项检查，确认离线召回的证据边界 |
 | 41 | 2026-11-27 | [MCP 协议证据链](lessons/d41-mcp-protocol-evidence-chain.md) | ✅ | 初始把版本差异预测为握手期，并一度把轨迹记录当执行证明；经 MCP 2.x/default 对照、源码门禁、产物覆盖诊断与三项检查后通过；未验证真实模型、远程 HTTP 或 Skill Hub 安装 |
+| 42 | 2026-11-28 | [W6 工具全链路证据复盘（buffer）](lessons/d42-week6-tool-evidence-review.md) | ✅ | 曾把 MCP 非错误返回称为“加载成功”；经冻结收据 core/all 对照、汇总源码、日历 payload 与外部状态换例及三项检查后通过；未重放真实 MCP、LLM 或外部系统 |
 
 ---
 

@@ -2,7 +2,7 @@
 
 > 章节：W6 / ch4 buffer 复盘（`vendor/ai-agent-book/book/chapter4.md`）
 > 实验：审计教材冻结验证收据 `vendor/ai-agent-book/chapter4/execution-tools/validation/experiment_4_4/real_mcp_gui_20260802T093657Z/summary.json`
-> 备课日期 2026-11-28 ｜ 授课日期 待开展 ｜ 状态 待开展
+> 备课日期 2026-11-28 ｜ 授课日期 2026-11-28 ｜ 状态 ✅
 
 本日是 buffer 日，不引入 Day 43 的 Coding Agent，只复盘 Day 36–41。本文是分步教学材料，不一次性贴入对话；没有实际运行、源码讲解、单变量对照和三项理解检查时，不填完成状态。
 
@@ -39,7 +39,7 @@
 - 唯一变量：`D42_GATE=core` 或 `D42_GATE=all`。
 - 观察点：`input_fingerprint`、`true_gate_count`、`false_gates`、`recorded_status`、`recorded_official_complete`、`audit_release_allowed`。
 - 预测问题：只改变汇总策略后，哪些字段必须保持不变，哪个字段可能改变？这能说明“事实收据”和“判定策略”各自负责什么？
-- 学员预测：待回答。
+- 学员预测：`input_fingerprint`、`true_gate_count`、`false_gates`、`recorded_status` 与 `recorded_official_complete` 保持不变；`audit_release_allowed` 可能随 `core → all` 改变，因为 all 策略下任一必需门失败都会阻止发布。
 
 ## 3. 运行实验
 
@@ -109,7 +109,7 @@ $env:D42_GATE = 'core'
 $d42Probe | python -m uv run --no-sync --extra ch4 python -
 ```
 
-**真实证据**：待学员运行并贴回。需记录命令、退出状态、指纹和关键字段；输出只是对历史收据的本地审计，不是外部工具的新执行证据。
+**真实证据（2026-11-28，学员亲自运行并贴回）**：步骤 A 无报错并返回 PowerShell 提示符；core 基线退出码为 0。必要字段为 `input_fingerprint=eb47334aaa1f`、`true_gate_count=13`、`gate_count=15`、`false_gates=[real_calendar_mutation, real_email_mutation]`、`all_core=true`、`all_gates=false`、`recorded_status=blocked`、`recorded_official_complete=false`、`audit_release_allowed=true`。这是对 2026-08-02 历史收据的本地审计，不是外部工具的新执行证据。
 
 ## 4. 逐段读冻结收据
 
@@ -117,11 +117,11 @@ $d42Probe | python -m uv run --no-sync --extra ch4 python -
 
 | 层次 | 冻结收据 / 字段 | 能证明什么 | 不能证明什么 | 学员解释 |
 |---|---|---|---|---|
-| campaign 输入 | `campaign_id`、`generated_at`、文件哈希 | 本次审计读取的是哪份历史快照 | 今天重新执行了 campaign | 待回答 |
-| MCP 传输 | `receipts/16_calendar_preflight.json` 的 `mcp_result_is_error` | MCP 调用是否以协议错误返回 | payload 业务操作成功 | 待回答 |
-| 工具 payload | 同一收据的 `payload.success` 与 `error` | 工具实现报告的业务结果 | 外部状态已按目标改变 | 待回答 |
-| 局部门禁 | `gates.<name>` | 当前门禁规则对对应收据的判断 | 其他门也通过、整体完成 | 待回答 |
-| 汇总策略 | `status`、`official_complete`、`blockers` | 冻结脚本如何汇总门禁 | 每项原始业务状态都已独立回读 | 待回答 |
+| campaign 输入 | `campaign_id`、`generated_at`、文件哈希 | 本次审计读取的是哪份历史快照 | 今天重新执行了 campaign | 能指出输入是冻结历史快照，`exit=0` 只说明审计程序正常结束 |
+| MCP 传输 | `receipts/16_calendar_preflight.json` 的 `mcp_result_is_error` | MCP 调用是否以协议错误返回 | payload 业务操作成功 | 初答“加载成功”过宽；经校准后明确为协议调用正常返回 |
+| 工具 payload | 同一收据的 `payload.success` 与 `error` | 工具实现报告的业务结果 | 外部状态已按目标改变 | 能解释返回本身成功，但 payload 报告初始化失败 |
+| 局部门禁 | `gates.<name>` | 当前门禁规则对对应收据的判断 | 其他门也通过、整体完成 | 能用 13/15 与两个失败门区分局部绿灯和完整结论 |
+| 汇总策略 | `status`、`official_complete`、`blockers` | 冻结脚本如何汇总门禁 | 每项原始业务状态都已独立回读 | 能解释 core 审计为真与历史正式完成为假不矛盾 |
 
 特别核对同一日历收据中“`mcp_result_is_error=false` 与 `payload.success=false` 可以同时存在”；这两项回答的是不同问题，并不矛盾。
 
@@ -137,13 +137,13 @@ $d42Probe | python -m uv run --no-sync --extra ch4 python -
 
 **版本边界**：冻结 `summary.json` 的 `experiment` 字段是 `4-3`，当前脚本写出的是 `4-4`；因此当前源码可用于理解现行汇总机制，但不能冒充生成这份旧收据时的精确源码快照。若要做可复现审计，还需要对应提交或把生成脚本版本写进 manifest。
 
-**学员解释**：待回答。
+**学员解释**：能根据源码推导 core 全真、all 非全真时 `status=blocked`、`official_complete=false`；能区分冻结字段与本地审计字段。初次把 `mcp_result_is_error=false` 表述为“加载成功”，经提示后明确为协议层正常返回，并指出仍需回读外部日历状态。
 
 ## 6. 单变量对照
 
 - 唯一改变的条件：`D42_GATE: core → all`。
 - 保持不变：同一文件、同一指纹、同一 gates、同一 core 名单和同一程序。
-- 对照前预测：待回答。
+- 对照前预测：指纹、门禁数量、失败门和历史记录字段不变；只改变策略与本地审计结论。
 
 ```powershell
 $env:D42_GATE = 'all'
@@ -152,15 +152,15 @@ $d42Probe | python -m uv run --no-sync --extra ch4 python -
 
 | 实测观察 | 解释假设 | 待验证判断 |
 |---|---|---|
-| 待运行后填写 | 待根据字段与源码讨论 | 若要把某个外部门改为可选，应怎样修改规则并增加哪类审查 |
+| 两次指纹均为 `eb47334aaa1f`，门禁事实与历史字段完全相同；`policy` 从 `core` 变为 `all`，`audit_release_allowed` 从 `true` 变为 `false`；两次退出码均为 0 | 固定历史输入下，本地汇总策略是审计结论变化的唯一程序条件 | 若要把某个外部门改为可选，应先明确业务要求、修改必需门集合，并保留原始门禁与外部状态证据供审查 |
 
 先核对指纹和所有事实字段是否相同，再解释策略字段的差异。两次输出只证明这份审计程序在固定历史输入上的行为，不证明真实外部系统现在可用。
 
 ## 7. 理解检查：每次只问一题
 
-1. **概念复述**：为什么 `mcp_result_is_error=false`、`payload.success=true`、外部状态正确和 `official_complete=true` 是四种不同结论？
-2. **结果预测**：若只把 `real_email_mutation` 从必需门移到可选门，固定收据下哪些字段应保持不变，哪些汇总字段可能改变？
-3. **故障定位**：某次报告 `official_complete=false`，但所有 MCP 调用都非错误；你会怎样从 `blockers` 追到具体 receipt、payload、外部状态与门禁源码？
+1. **概念复述，通过**：学员指出四个键含义独立、判断依据不同，并以 `payload.success` 是工具实现自报为例；补全后能区分协议、工具自报、独立外部状态和汇总策略四层。
+2. **结果预测，通过**：学员判断修改必需/可选规则不会改变指纹、原始门禁、失败门和冻结历史字段，只可能改变本地汇总结论；同时指出移除一个必需门不保证其他必需门通过。
+3. **故障定位，通过**：学员先由 `official_complete` 追到 `status`，再区分 MCP 非错误与 payload 业务结果；经缩小问题后补全 `false_gates`、门禁判定依据、工具执行日志和独立外部状态回读。
 
 <details><summary>讲师核对要点（学员回答后再展开）</summary>
 
@@ -178,17 +178,17 @@ $d42Probe | python -m uv run --no-sync --extra ch4 python -
 
 ## 9. 卡点（课堂后共同记录）
 
-- 已理解到哪：待开展。
-- 尚未理解及证据：待开展。
-- 下次从哪一小步继续：待开展。
-- 状态：待开展（授课后才选 `✅` / `▶` / `🔁`）。
+- 已理解到哪：能区分协议返回、工具 payload、外部业务状态与整体完成；能根据 core/all 汇总源码解释 `passed / blocked / failed`，并从失败门反查证据。
+- 尚未理解及证据：无阻塞性缺口。曾把 MCP 非错误返回说成“加载成功”，经日历收据换例后已校准为协议层结论。
+- 下次从哪一小步继续：Day 43，进入最小 Coding Agent harness。
+- 状态：✅。
 
 ## 10. 讲师备注
 
-- 实际授课日期、用时、停在哪一步：待开展。
-- 实验命令、证据位置与必要真实摘录：待运行。
-- 学员的原始预测与后续解释：待回答。
-- 三项理解检查：概念 待检查 / 预测 待检查 / 定位 待检查。
-- 本次观察、假设、待验证点：教材冻结收据不是本机当前外部系统状态；当前源码与冻结收据存在实验编号漂移，需限制源码归因。
+- 实际授课日期、用时、停在哪一步：2026-11-28，完成实验、源码、单变量对照与三项理解检查。
+- 实验命令、证据位置与必要真实摘录：学员 PowerShell 控制台；core/all 两次指纹均为 `eb47334aaa1f`，13/15 个门为真，失败门为日历与邮件；本地审计结论 `true → false`，两次退出码均为 0。
+- 学员的原始预测与后续解释：准确预测冻结事实字段不变、策略结论可能改变；能解释历史 `official_complete=false` 与本地 core 审计为真使用了不同规则。
+- 三项理解检查：概念 通过 / 预测 通过 / 定位 通过。
+- 本次观察、假设、待验证点：教材冻结收据不是本机当前外部系统状态；当前源码与冻结收据存在实验编号漂移，需限制源码归因。未重放真实 MCP、LLM、日历、邮件或虚拟设备。
 - 对应备课 skill：`vendor/ai-agent-book/skills/tool-design/SKILL.md`、`tool-discovery/SKILL.md`、`mcp-skill-hub/SKILL.md`。
-- 进度处理：授课结束或中断后追加 Day 42 日志；仅备课不追加日志。
+- 进度处理：已追加 Day 42 `✅` 日志；下一课为 Day 43。
